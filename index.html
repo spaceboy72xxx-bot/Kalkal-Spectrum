@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KALKAL VIDEO - Studio</title>
-
-  <!-- WEBM DURATION FIXER PARA SA YOUTUBE AT PLAYERS -->
   <script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
-
   <style>
     :root {
       --bg: #07090e;
@@ -63,7 +60,6 @@
       animation: blink 0.8s infinite alternate;
     }
     @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
-
     .video-container {
       width: 100%;
       max-width: 440px;
@@ -79,7 +75,6 @@
       position: relative;
     }
     canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
-
     .export-overlay {
       position: absolute;
       inset: 0;
@@ -94,11 +89,7 @@
       text-align: center;
     }
     .export-overlay.active { display: flex; }
-    .export-spinner {
-      font-size: 32px;
-      margin-bottom: 8px;
-      animation: pulseGlow 1s infinite alternate;
-    }
+    .export-spinner { font-size: 32px; margin-bottom: 8px; animation: pulseGlow 1s infinite alternate; }
     @keyframes pulseGlow {
       from { transform: scale(1); filter: drop-shadow(0 0 6px var(--accent-cyan)); }
       to { transform: scale(1.15); filter: drop-shadow(0 0 20px var(--accent-pink)); }
@@ -143,7 +134,6 @@
       font-weight: 700;
       cursor: pointer;
     }
-
     .audio-bar {
       width: 100%;
       max-width: 440px;
@@ -156,7 +146,6 @@
     }
     .audio-progress { flex: 1; height: 5px; background: #181d2a; border-radius: 3px; cursor: pointer; position: relative; }
     .audio-progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink)); border-radius: 3px; }
-
     .main-actions-row {
       display: grid;
       grid-template-columns: 65px 1.4fr 1fr 1fr;
@@ -194,7 +183,6 @@
     #clipRecordBtn.recording { background: #ffaa00; color: #000; }
     #audioTrackBtn { background: #131824; border: 1px dashed rgba(0, 240, 255, 0.4); position: relative; overflow: hidden; }
     #audioTrackBtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-
     .tabs-row {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
@@ -233,7 +221,6 @@
       box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
     }
     .tab-card.active .tab-label { color: var(--accent-cyan); }
-
     .adjustments-panel {
       width: 100%;
       max-width: 440px;
@@ -250,7 +237,6 @@
     .panel-title { font-size: 11px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.8px; }
     .choice-pane { display: none; flex-direction: column; gap: 11px; }
     .choice-pane.active { display: flex; }
-
     .slider-row { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .slider-info { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); font-weight: 600; }
     .slider-info span { color: var(--accent-cyan); font-family: monospace; }
@@ -271,7 +257,6 @@
       transition: all 0.15s;
     }
     .step-btn:hover { background: var(--accent-cyan); color: #000; }
-
     input[type="range"] {
       flex: 1;
       -webkit-appearance: none;
@@ -313,7 +298,6 @@
       white-space: nowrap;
     }
     select:focus { border-color: var(--accent-cyan); }
-
     .upload-btn-card {
       position: relative;
       border: 1px dashed rgba(255, 255, 255, 0.2);
@@ -329,7 +313,6 @@
     .upload-btn-card input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .file-name-sub { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
     .divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 4px 0; }
-
     .save-modal-overlay {
       position: fixed;
       inset: 0;
@@ -427,17 +410,13 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header>
     <div class="brand-title">⚡ KALKAL VIDEO</div>
     <div class="badge-status" id="statusBadge">READY</div>
   </header>
 
-  <!-- 1. VIDEO CONTAINER -->
   <div class="video-container">
     <canvas id="visualizer" width="800" height="800"></canvas>
-
-    <!-- FULL VIDEO EXPORT OVERLAY -->
     <div class="export-overlay" id="exportOverlay">
       <div class="export-spinner">🎬</div>
       <div class="export-title" id="exportStatusTitle">Exporting Music Video...</div>
@@ -450,16 +429,12 @@
     </div>
   </div>
 
-  <!-- Audio Scrub Progress -->
   <div class="audio-bar">
     <span id="currentTime">00:00</span>
-    <div class="audio-progress" id="progressBar">
-      <div class="audio-progress-fill" id="progressFill"></div>
-    </div>
+    <div class="audio-progress" id="progressBar"><div class="audio-progress-fill" id="progressFill"></div></div>
     <span id="totalTime">00:00</span>
   </div>
 
-  <!-- 2. MAIN ACTIONS ROW -->
   <div class="main-actions-row">
     <button class="action-btn" id="playBtn" title="Play / Pause">▶ Play</button>
     <button class="action-btn" id="fullExportBtn">🎬 Full Video</button>
@@ -470,7 +445,6 @@
     </label>
   </div>
 
-  <!-- 3. TABS ROW (6 TABS) -->
   <div class="tabs-row">
     <div class="tab-card active" data-choice="spectrumPane">
       <span class="tab-icon">📁</span>
@@ -498,9 +472,7 @@
     </div>
   </div>
 
-  <!-- 4. ADJUSTMENTS PANEL -->
   <div class="adjustments-panel">
-
     <!-- SUB-PANE 1: SPECTRUM -->
     <div class="choice-pane active" id="spectrumPane">
       <div class="panel-title">Spectrum & Elemental Lava Umbok</div>
@@ -530,7 +502,6 @@
             <option value="sunburst">Sunburst Corona (Sawtooth Rays)</option>
           </optgroup>
         </select>
-
         <select id="colorSelect">
           <option value="rainbow">🌈 Rainbow Glow</option>
           <option value="cyan">💎 Neon Cyan</option>
@@ -538,24 +509,16 @@
           <option value="gold">🔥 Solar Flare Gold</option>
         </select>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Laki ng Umbok sa Palo ng Tugtog</label>
-          <span id="barHeightVal">120px</span>
-        </div>
+        <div class="slider-info"><label>Laki ng Umbok sa Palo ng Tugtog</label><span id="barHeightVal">120px</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('barHeightSlider', -5)">−</div>
           <input type="range" id="barHeightSlider" min="30" max="260" step="5" value="120" />
           <div class="step-btn" onclick="stepSlider('barHeightSlider', 5)">+</div>
         </div>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Kapal ng Pulang Gilid / Border</label>
-          <span id="barWidthVal">4.0px</span>
-        </div>
+        <div class="slider-info"><label>Kapal ng Pulang Gilid / Border</label><span id="barWidthVal">4.0px</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('barWidthSlider', -0.5)">−</div>
           <input type="range" id="barWidthSlider" min="1.5" max="12" step="0.5" value="4.0" />
@@ -573,10 +536,7 @@
         <input type="file" id="logoUpload" accept="image/*" />
       </div>
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Center Logo Size</label>
-          <span id="centerSizeVal">125px</span>
-        </div>
+        <div class="slider-info"><label>Center Logo Size</label><span id="centerSizeVal">125px</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('centerSizeSlider', -5)">−</div>
           <input type="range" id="centerSizeSlider" min="10" max="240" step="5" value="125" />
@@ -587,15 +547,7 @@
 
     <!-- SUB-PANE 3: BEAT REACTION -->
     <div class="choice-pane" id="beatPane">
-      <div class="panel-title">Beat Reaction & Video Export Format</div>
-      <div class="slider-row">
-        <label style="font-size:10px; color:#00f0ff; font-weight:700;">Format ng Video sa Download:</label>
-        <select id="exportFormatSelect">
-          <option value="mp4" selected>📱 MP4 Format (Siguradong Magpe-play sa Phone Gallery)</option>
-          <option value="webm">🌐 WebM Format (Para sa YouTube & Web)</option>
-        </select>
-      </div>
-
+      <div class="panel-title">Beat Reaction & Instrument Controller</div>
       <select id="beatEffectSelect">
         <optgroup label="📻 5 Lumang Style na Beat (Super Ganda Retro)">
           <option value="vhs_glitch">📼 1. 90s VHS Tape Glitch & Jitter</option>
@@ -613,12 +565,8 @@
         </optgroup>
         <option value="none">None (Static Screen)</option>
       </select>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Lakas ng Palo (Multi-Instrument Sensitivity)</label>
-          <span id="sensVal">2.2x</span>
-        </div>
+        <div class="slider-info"><label>Lakas ng Palo (Multi-Instrument Sensitivity)</label><span id="sensVal">2.2x</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('sensitivity', -0.1)">−</div>
           <input type="range" id="sensitivity" min="0.1" max="5.0" step="0.1" value="2.2" />
@@ -634,7 +582,6 @@
         <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Ilagay ang Pamagat o Caption:</label>
         <input type="text" id="captionInput" placeholder="Hal: KALKAL REMIX (BASS BOOSTED)" value="KALKAL REMIX" />
       </div>
-
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="slider-row">
           <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Text Design Style:</label>
@@ -648,7 +595,6 @@
             <option value="street_bold">🖤 7. Streetwear Bold Stroke</option>
           </select>
         </div>
-
         <div class="slider-row">
           <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Beat Reaction ng Text:</label>
           <select id="captionBeatSelect">
@@ -660,24 +606,16 @@
           </select>
         </div>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Laki ng Text (Size)</label>
-          <span id="captionSizeVal">38px</span>
-        </div>
+        <div class="slider-info"><label>Laki ng Text (Size)</label><span id="captionSizeVal">38px</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('captionSizeSlider', -2)">−</div>
           <input type="range" id="captionSizeSlider" min="18" max="75" step="1" value="38" />
           <div class="step-btn" onclick="stepSlider('captionSizeSlider', 2)">+</div>
         </div>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Posisyon (Taas / Baba)</label>
-          <span id="captionYVal">690px</span>
-        </div>
+        <div class="slider-info"><label>Posisyon (Taas / Baba)</label><span id="captionYVal">690px</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('captionYSlider', -10)">−</div>
           <input type="range" id="captionYSlider" min="60" max="740" step="5" value="690" />
@@ -727,26 +665,17 @@
           </select>
         </div>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Particle Speed</label>
-          <span id="particleSpeedVal">0.30x</span>
-        </div>
+        <div class="slider-info"><label>Particle Speed</label><span id="particleSpeedVal">0.30x</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('particleSpeedSlider', -0.02)">−</div>
           <input type="range" id="particleSpeedSlider" min="0.01" max="2.0" step="0.01" value="0.30" />
           <div class="step-btn" onclick="stepSlider('particleSpeedSlider', 0.02)">+</div>
         </div>
       </div>
-
       <div class="divider"></div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label style="color: #ffaa00; font-weight: 700;">🔥 Pyro & Fire Effects</label>
-          <span id="pyroStatusLabel">ON</span>
-        </div>
+        <div class="slider-info"><label style="color: #ffaa00; font-weight: 700;">🔥 Pyro & Fire Effects</label><span id="pyroStatusLabel">ON</span></div>
         <select id="pyroEffectSelect">
           <option value="random_logo" selected>🔥 1. Random Fireball Blast</option>
           <option value="firework_fountain">🎆 2. Fireworks Fountain</option>
@@ -755,24 +684,16 @@
           <option value="none">🚫 Off</option>
         </select>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Pyro Speed</label>
-          <span id="pyroSpeedVal">0.35x</span>
-        </div>
+        <div class="slider-info"><label>Pyro Speed</label><span id="pyroSpeedVal">0.35x</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('pyroSpeedSlider', -0.05)">−</div>
           <input type="range" id="pyroSpeedSlider" min="0.05" max="2.5" step="0.05" value="0.35" />
           <div class="step-btn" onclick="stepSlider('pyroSpeedSlider', 0.05)">+</div>
         </div>
       </div>
-
       <div class="slider-row">
-        <div class="slider-info">
-          <label>Pyro Frequency</label>
-          <span id="pyroFreqVal">1.5x</span>
-        </div>
+        <div class="slider-info"><label>Pyro Frequency</label><span id="pyroFreqVal">1.5x</span></div>
         <div class="slider-control">
           <div class="step-btn" onclick="stepSlider('pyroFreqSlider', -0.2)">−</div>
           <input type="range" id="pyroFreqSlider" min="0.5" max="3.0" step="0.2" value="1.5" />
@@ -780,7 +701,6 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- POP-UP MODAL -->
@@ -793,13 +713,13 @@
       <div class="preview-box">
         <video id="finishedVideoPreview" controls playsinline autoplay loop></video>
       </div>
-      <div class="video-info-badge" id="videoDurationBadge">⏱️ Haba ng Video: 00:00 (MP4 Ready)</div>
+      <div class="video-info-badge" id="videoDurationBadge">⏱️ Haba ng Video: 00:00 (YouTube Ready)</div>
       <div class="save-modal-desc">
-        Piliin ang <strong>"I-download ang Video File"</strong> para ma-save agad sa iyong phone gallery:
+        Piliin ang <strong>"I-download ang Video File"</strong> para ma-save nang buo ang video:
       </div>
       <div class="save-modal-actions">
         <button class="save-act-btn btn-direct-download" id="saveDirectDownloadBtn">
-          ⬇️ I-download ang Video File (.mp4)
+          ⬇️ I-download ang Video File (.webm)
         </button>
         <button class="save-act-btn btn-share-gallery" id="shareToGalleryBtn">
           📲 I-save sa Gallery / Photos (Share Menu)
@@ -808,8 +728,8 @@
           ▶ Buksan sa Fullscreen Player
         </button>
       </div>
-      <div class="save-guide-note" id="galleryGuideNote">
-        ✅ <strong>Gallery Playable:</strong> Naka-save bilang MP4 na kayang i-play ng kahit anong default Gallery app sa Android at iPhone!
+      <div class="save-guide-note">
+        ✅ <strong>Buong Oras (YouTube Ready):</strong> Na-patch na ang totoong haba ng video. Kung hindi ito ma-play sa default gallery app ng phone mo, buksan ito sa <strong>Google Photos</strong> o <strong>VLC</strong>!
       </div>
     </div>
   </div>
@@ -832,7 +752,6 @@
     const saveDirectDownloadBtn = document.getElementById('saveDirectDownloadBtn');
     const shareToGalleryBtn = document.getElementById('shareToGalleryBtn');
     const openPlayerBtn = document.getElementById('openPlayerBtn');
-    const galleryGuideNote = document.getElementById('galleryGuideNote');
 
     const exportOverlay = document.getElementById('exportOverlay');
     const exportStatusTitle = document.getElementById('exportStatusTitle');
@@ -844,7 +763,6 @@
     const styleSelect = document.getElementById('styleSelect');
     const colorSelect = document.getElementById('colorSelect');
     const beatEffectSelect = document.getElementById('beatEffectSelect');
-    const exportFormatSelect = document.getElementById('exportFormatSelect');
 
     const captionInput = document.getElementById('captionInput');
     const captionStyleSelect = document.getElementById('captionStyleSelect');
@@ -896,45 +814,19 @@
 
     let currentExportBlob = null;
     let currentExportFileName = "";
-    let activeMimeType = "video/mp4";
-    let activeFileExt = "mp4";
 
-    function resolveExportFormat() {
-      const chosen = exportFormatSelect ? exportFormatSelect.value : 'mp4';
-      if (chosen === 'mp4') {
-        const mp4Types = [
-          'video/mp4;codecs=avc1,mp4a.40.2',
-          'video/mp4;codecs=avc1',
-          'video/mp4'
-        ];
-        for (const t of mp4Types) {
-          if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
-            activeMimeType = t;
-            activeFileExt = 'mp4';
-            return;
-          }
-        }
-      }
-      const webmTypes = [
-        'video/webm;codecs=vp8,opus',
-        'video/webm;codecs=vp9,opus',
-        'video/webm'
-      ];
-      for (const t of webmTypes) {
+    function getRecordingMime() {
+      const types = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+      for (const t of types) {
         if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
-          activeMimeType = t;
-          activeFileExt = 'webm';
-          return;
+          return t;
         }
       }
-      activeMimeType = '';
-      activeFileExt = 'mp4';
+      return 'video/webm';
     }
 
-    resolveExportFormat();
-    if (exportFormatSelect) {
-      exportFormatSelect.addEventListener('change', resolveExportFormat);
-    }
+    const preferredMime = getRecordingMime();
+    const fileExt = 'webm';
 
     let lastKick = 0, kickImpulse = 0;
     let lastBassGtr = 0, bassGtrImpulse = 0;
@@ -1627,8 +1519,9 @@
             for (let t = p.trail.length - 1; t >= 0; t--) {
               const tr = p.trail[t];
               tr.alpha -= tr.decay;
-              if (tr.alpha <= 0) p.trail.splice(t, 1);
-              else {
+              if (tr.alpha <= 0) {
+                p.trail.splice(t, 1);
+              } else {
                 ctx.fillStyle = `rgba(255, ${Math.floor(100 + tr.alpha * 120)}, 0, ${tr.alpha * 0.7})`;
                 ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.size, 0, Math.PI * 2); ctx.fill();
               }
@@ -1652,8 +1545,9 @@
             for (let t = p.trail.length - 1; t >= 0; t--) {
               const tr = p.trail[t];
               tr.alpha -= tr.decay;
-              if (tr.alpha <= 0) p.trail.splice(t, 1);
-              else {
+              if (tr.alpha <= 0) {
+                p.trail.splice(t, 1);
+              } else {
                 ctx.fillStyle = `rgba(255, ${Math.floor(180 + tr.alpha * 75)}, 60, ${tr.alpha * 0.8})`;
                 ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.size, 0, Math.PI * 2); ctx.fill();
               }
@@ -2043,7 +1937,7 @@
 
     function openSaveModal(blob, baseName, durationSeconds) {
       currentExportBlob = blob;
-      currentExportFileName = `${baseName}.${activeFileExt}`;
+      currentExportFileName = `${baseName}.${fileExt}`;
       
       const videoURL = URL.createObjectURL(blob);
       finishedVideoPreview.src = videoURL;
@@ -2052,21 +1946,7 @@
       const secs = Math.floor(durationSeconds % 60);
       const durationFormatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
       
-      const formatLabel = activeFileExt.toUpperCase();
-      videoDurationBadge.innerText = `⏱️ Haba: ${durationFormatted} | Format: ${formatLabel}`;
-
-      if (saveDirectDownloadBtn) {
-        saveDirectDownloadBtn.innerText = `⬇️ I-download ang Video (.${activeFileExt})`;
-      }
-
-      if (galleryGuideNote) {
-        if (activeFileExt === 'mp4') {
-          galleryGuideNote.innerHTML = `✅ <strong>Gallery Playable:</strong> Naka-save bilang <strong>MP4</strong> kaya siguradong magpe-play sa iyong Phone Gallery at Photos app!`;
-        } else {
-          galleryGuideNote.innerHTML = `💡 <strong>WebM Format:</strong> Kung hindi ma-play sa default Phone Gallery, buksan ito gamit ang <strong>VLC Player</strong>, <strong>Google Photos</strong>, o gamitin ang Share Menu.`;
-        }
-      }
-
+      videoDurationBadge.innerText = `⏱️ Haba ng Video: ${durationFormatted} (YouTube Ready ✅)`;
       saveSuccessModal.classList.add('active');
     }
 
@@ -2077,8 +1957,8 @@
 
     saveDirectDownloadBtn.addEventListener('click', () => {
       if (!currentExportBlob) return;
-      const mime = activeFileExt === 'mp4' ? 'video/mp4' : 'video/webm';
-      const downloadBlob = new Blob([currentExportBlob], { type: mime });
+      
+      const downloadBlob = new Blob([currentExportBlob], { type: 'video/webm' });
       const url = URL.createObjectURL(downloadBlob);
       
       const a = document.createElement('a');
@@ -2092,14 +1972,13 @@
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        saveDirectDownloadBtn.innerText = `⬇️ I-download ang Video (.${activeFileExt})`;
+        saveDirectDownloadBtn.innerText = "⬇️ I-download ang Video File (.webm)";
       }, 1500);
     });
 
     shareToGalleryBtn.addEventListener('click', async () => {
       if (!currentExportBlob) return;
-      const mime = activeFileExt === 'mp4' ? 'video/mp4' : 'video/webm';
-      const shareFile = new File([currentExportBlob], currentExportFileName, { type: mime });
+      const shareFile = new File([currentExportBlob], currentExportFileName, { type: 'video/webm' });
 
       if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
         try {
@@ -2118,13 +1997,12 @@
       window.open(URL.createObjectURL(currentExportBlob), '_blank');
     });
 
+    // FULL EXPORT
     fullExportBtn.addEventListener('click', () => {
       if (!audio.src) { alert("Pumili muna ng kanta gamit ang '🎵 Audio'!"); return; }
       if (isRecording) return;
       initAudio();
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      
-      resolveExportFormat();
 
       audio.currentTime = 0;
       audio.play();
@@ -2136,8 +2014,10 @@
       if (audioTrack) stream.addTrack(audioTrack);
 
       recordedChunks = [];
-      const options = { videoBitsPerSecond: 2500000 };
-      if (activeMimeType) options.mimeType = activeMimeType;
+      const options = {
+        mimeType: preferredMime,
+        videoBitsPerSecond: 2500000
+      };
 
       try {
         mediaRecorder = new MediaRecorder(stream, options);
@@ -2146,15 +2026,16 @@
       }
       
       recordStartTime = Date.now();
-      exportStatusTitle.innerText = `Exporting Music Video (${activeFileExt.toUpperCase()})...`;
+      exportStatusTitle.innerText = "Exporting Music Video (Full Duration)...";
 
       mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
       
       mediaRecorder.onstop = async () => {
-        exportStatusTitle.innerText = "Tinutapos ang video...";
-        statusBadge.innerText = "FINISHING";
+        exportStatusTitle.innerText = "Inaayos ang Duration Metadata...";
+        statusBadge.innerText = "PATCHING DURATION";
 
-        const rawBlob = new Blob(recordedChunks, { type: activeMimeType || 'video/mp4' });
+        const rawBlob = new Blob(recordedChunks, { type: preferredMime });
+        
         const elapsedSecs = Math.max(1, (Date.now() - recordStartTime) / 1000);
         const videoDurationMs = Math.round(elapsedSecs * 1000);
 
@@ -2205,13 +2086,12 @@
       }
     });
 
+    // CLIP RECORD
     clipRecordBtn.addEventListener('click', () => {
       if (!audio.src) { alert("Pumili muna ng kanta gamit ang '🎵 Audio'!"); return; }
       initAudio();
 
       if (!isRecording) {
-        resolveExportFormat();
-
         if (audio.paused) { audio.play(); playBtn.innerText = "⏸ Pause"; }
         render();
 
@@ -2220,8 +2100,10 @@
         if (audioTrack) stream.addTrack(audioTrack);
 
         recordedChunks = [];
-        const options = { videoBitsPerSecond: 2500000 };
-        if (activeMimeType) options.mimeType = activeMimeType;
+        const options = {
+          mimeType: preferredMime,
+          videoBitsPerSecond: 2500000
+        };
 
         try {
           mediaRecorder = new MediaRecorder(stream, options);
@@ -2234,8 +2116,9 @@
         mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
         
         mediaRecorder.onstop = async () => {
-          statusBadge.innerText = "FINISHING";
-          const rawBlob = new Blob(recordedChunks, { type: activeMimeType || 'video/mp4' });
+          statusBadge.innerText = "PATCHING DURATION";
+          const rawBlob = new Blob(recordedChunks, { type: preferredMime });
+          
           const elapsedSecs = Math.max(1, (Date.now() - recordStartTime) / 1000);
           const clipDurationMs = Math.round(elapsedSecs * 1000);
 
