@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KALKAL VIDEO - Studio</title>
+  <!-- DURATION FIXER PARA SA WEBM -->
   <script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
+  <!-- MP4-MUXER PARA SA DIRECT NATIVE MP4 ENCODING -->
+  <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.min.js"></script>
   <style>
     :root {
       --bg: #07090e;
@@ -60,6 +63,7 @@
       animation: blink 0.8s infinite alternate;
     }
     @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+
     .video-container {
       width: 100%;
       max-width: 440px;
@@ -75,6 +79,7 @@
       position: relative;
     }
     canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
+
     .export-overlay {
       position: absolute;
       inset: 0;
@@ -134,6 +139,7 @@
       font-weight: 700;
       cursor: pointer;
     }
+
     .audio-bar {
       width: 100%;
       max-width: 440px;
@@ -146,6 +152,7 @@
     }
     .audio-progress { flex: 1; height: 5px; background: #181d2a; border-radius: 3px; cursor: pointer; position: relative; }
     .audio-progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink)); border-radius: 3px; }
+
     .main-actions-row {
       display: grid;
       grid-template-columns: 65px 1.4fr 1fr 1fr;
@@ -183,6 +190,7 @@
     #clipRecordBtn.recording { background: #ffaa00; color: #000; }
     #audioTrackBtn { background: #131824; border: 1px dashed rgba(0, 240, 255, 0.4); position: relative; overflow: hidden; }
     #audioTrackBtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
     .tabs-row {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
@@ -221,6 +229,7 @@
       box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
     }
     .tab-card.active .tab-label { color: var(--accent-cyan); }
+
     .adjustments-panel {
       width: 100%;
       max-width: 440px;
@@ -237,6 +246,7 @@
     .panel-title { font-size: 11px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.8px; }
     .choice-pane { display: none; flex-direction: column; gap: 11px; }
     .choice-pane.active { display: flex; }
+
     .slider-row { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .slider-info { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); font-weight: 600; }
     .slider-info span { color: var(--accent-cyan); font-family: monospace; }
@@ -257,6 +267,7 @@
       transition: all 0.15s;
     }
     .step-btn:hover { background: var(--accent-cyan); color: #000; }
+
     input[type="range"] {
       flex: 1;
       -webkit-appearance: none;
@@ -298,6 +309,7 @@
       white-space: nowrap;
     }
     select:focus { border-color: var(--accent-cyan); }
+
     .upload-btn-card {
       position: relative;
       border: 1px dashed rgba(255, 255, 255, 0.2);
@@ -313,6 +325,7 @@
     .upload-btn-card input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .file-name-sub { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
     .divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 4px 0; }
+
     .save-modal-overlay {
       position: fixed;
       inset: 0;
@@ -387,7 +400,6 @@
       justify-content: center;
       gap: 8px;
       transition: all 0.2s;
-      text-decoration: none;
     }
     .btn-direct-download {
       background: linear-gradient(135deg, #00f0ff, #0077ff);
@@ -708,7 +720,7 @@
     </div>
   </div>
 
-  <!-- POP-UP MODAL (WITH 1-CLICK MP4 CONVERTER BRIDGE) -->
+  <!-- POP-UP MODAL (WITH FREECONVERT DIRECT API INTEGRATION) -->
   <div class="save-modal-overlay" id="saveSuccessModal">
     <div class="save-modal-box">
       <div class="save-modal-header">
@@ -726,9 +738,9 @@
           ⬇️ I-download ang Video (.webm - YouTube Ready)
         </button>
 
-        <!-- 1-CLICK IN-APP MP4 CONVERTER -->
-        <button class="save-act-btn btn-convert-mp4" id="convertMp4OnlineBtn">
-          🔄 I-convert sa MP4 (Para sa Phone Gallery)
+        <!-- FREECONVERT DIRECT API CONVERTER -->
+        <button class="save-act-btn btn-convert-mp4" id="convertMp4FreeConvertBtn">
+          🔄 I-convert sa MP4 (FreeConvert API)
         </button>
 
         <!-- SHARE TO GALLERY / PHOTOS -->
@@ -741,8 +753,8 @@
         </button>
       </div>
 
-      <div class="save-guide-note">
-        💡 <strong>Tip para sa Phone Gallery:</strong> Kung hindi ma-play ang WebM sa default phone gallery mo, pindutin ang pulang <strong>"🔄 I-convert sa MP4"</strong> button para makuha agad ang tunay na MP4!
+      <div class="save-guide-note" id="conversionStatusNote">
+        💡 <strong>Tip para sa Phone Gallery:</strong> Pindutin ang pulang <strong>"🔄 I-convert sa MP4"</strong> button gamit ang FreeConvert API para makuha agad ang tunay na MP4 na magpe-play sa Gallery!
       </div>
     </div>
   </div>
@@ -750,6 +762,9 @@
   <audio id="audio"></audio>
 
   <script>
+    // FREECONVERT API KEY (Pwedeng i-paste dito o kusa itong magtatanong)
+    const FREECONVERT_API_KEY = "YOUR_API_KEY_HERE";
+
     const canvas = document.getElementById('visualizer');
     const ctx = canvas.getContext('2d');
     const audio = document.getElementById('audio');
@@ -763,9 +778,10 @@
     const videoDurationBadge = document.getElementById('videoDurationBadge');
     const closeSaveModalBtn = document.getElementById('closeSaveModalBtn');
     const saveDirectDownloadBtn = document.getElementById('saveDirectDownloadBtn');
-    const convertMp4OnlineBtn = document.getElementById('convertMp4OnlineBtn');
+    const convertMp4FreeConvertBtn = document.getElementById('convertMp4FreeConvertBtn');
     const shareToGalleryBtn = document.getElementById('shareToGalleryBtn');
     const openPlayerBtn = document.getElementById('openPlayerBtn');
+    const conversionStatusNote = document.getElementById('conversionStatusNote');
 
     const exportOverlay = document.getElementById('exportOverlay');
     const exportStatusTitle = document.getElementById('exportStatusTitle');
@@ -1990,24 +2006,123 @@
       }, 1500);
     });
 
-    convertMp4OnlineBtn.addEventListener('click', () => {
+    // FREECONVERT DIRECT API CONVERTER
+    convertMp4FreeConvertBtn.addEventListener('click', async () => {
       if (!currentExportBlob) {
         alert("Mag-record muna ng video bago mag-convert!");
         return;
       }
-      const downloadBlob = new Blob([currentExportBlob], { type: 'video/webm' });
-      const url = URL.createObjectURL(downloadBlob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = currentExportFileName;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => document.body.removeChild(a), 500);
 
-      const confirmConvert = confirm("Nai-download na ang iyong video!\n\nBubuksan natin ang 1-Click MP4 Converter para piliin mo lang ang na-download na video at maging MP4 agad para sa Phone Gallery. Ipagpatuloy?");
-      if (confirmConvert) {
-        window.open("https://cloudconvert.com/webm-to-mp4", "_blank");
+      let apiKey = FREECONVERT_API_KEY;
+      if (!apiKey || apiKey === "YOUR_API_KEY_HERE") {
+        apiKey = localStorage.getItem("kalkal_freeconvert_key");
+        if (!apiKey) {
+          apiKey = prompt("Pakilagay ang iyong FreeConvert API Key:\n(Libre itong kunin sa freeconvert.com/dashboard/api/keys)");
+          if (!apiKey) return;
+          localStorage.setItem("kalkal_freeconvert_key", apiKey.trim());
+        }
+      }
+
+      const origText = convertMp4FreeConvertBtn.innerText;
+      convertMp4FreeConvertBtn.disabled = true;
+      convertMp4FreeConvertBtn.innerText = "⏳ 1/3: Gumagawa ng Job...";
+      conversionStatusNote.innerHTML = "⏳ <strong>FreeConvert API:</strong> Gumagawa ng conversion task sa cloud...";
+
+      try {
+        const jobPayload = {
+          tasks: {
+            "import-task": { operation: "import/upload" },
+            "convert-task": {
+              operation: "convert",
+              input: "import-task",
+              output_format: "mp4",
+              options: { video_codec: "h264", audio_codec: "aac" }
+            },
+            "export-task": { operation: "export/url", input: "convert-task" }
+          }
+        };
+
+        const jobRes = await fetch("https://api.freeconvert.com/v1/process/jobs", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey.trim()}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(jobPayload)
+        });
+
+        if (!jobRes.ok) {
+          const errData = await jobRes.json().catch(() => ({}));
+          throw new Error(errData.message || `HTTP ${jobRes.status}`);
+        }
+
+        const jobData = await jobRes.json();
+        const importTask = jobData.tasks.find(t => t.name === "import-task" || t.operation === "import/upload");
+        const uploadForm = importTask.result.form;
+
+        convertMp4FreeConvertBtn.innerText = "⏳ 2/3: Ipinapadala ang video...";
+        conversionStatusNote.innerHTML = "⏳ <strong>FreeConvert API:</strong> Ipinapadala ang video file sa converter...";
+
+        const uploadData = new FormData();
+        if (uploadForm.parameters) {
+          for (const [k, v] of Object.entries(uploadForm.parameters)) {
+            uploadData.append(k, v);
+          }
+        }
+        uploadData.append("file", currentExportBlob, `${uploadedSongName}.webm`);
+
+        const upRes = await fetch(uploadForm.url, {
+          method: "POST",
+          body: uploadData
+        });
+
+        if (!upRes.ok) throw new Error("Bigo ang pag-upload ng video sa server.");
+
+        convertMp4FreeConvertBtn.innerText = "⏳ 3/3: Kinoconvert sa MP4...";
+        conversionStatusNote.innerHTML = "⏳ <strong>FreeConvert API:</strong> Kinoconvert sa H.264/AAC MP4... Maghintay sandali.";
+
+        let completed = false;
+        let mp4Url = "";
+        let attempts = 0;
+
+        while (!completed && attempts < 60) {
+          await new Promise(r => setTimeout(r, 2500));
+          attempts++;
+
+          const pollRes = await fetch(`https://api.freeconvert.com/v1/process/jobs/${jobData.id}`, {
+            headers: { "Authorization": `Bearer ${apiKey.trim()}` }
+          });
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "completed") {
+            completed = true;
+            const exportTask = pollData.tasks.find(t => t.name === "export-task" || t.operation === "export/url");
+            mp4Url = exportTask.result.url;
+          } else if (pollData.status === "failed") {
+            throw new Error(pollData.error || "Bigo ang FreeConvert conversion.");
+          }
+        }
+
+        if (!mp4Url) throw new Error("Nag-timeout ang server conversion.");
+
+        convertMp4FreeConvertBtn.innerText = "✅ MP4 Na!";
+        conversionStatusNote.innerHTML = "✅ <strong>Tapos na!</strong> Na-download na ang tunay na MP4. Panoorin ito sa iyong Phone Gallery!";
+
+        const a = document.createElement("a");
+        a.href = mp4Url;
+        a.download = `${uploadedSongName}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 1000);
+        alert("🎉 Tagumpay! Naging tunay na MP4 na ang iyong video. Buksan ang iyong Phone Gallery para mapanood!");
+
+      } catch (err) {
+        console.error("FreeConvert API Error:", err);
+        alert(`Bigo ang FreeConvert API: ${err.message}\n\nTiyaking tama ang iyong FreeConvert API key.`);
+        conversionStatusNote.innerHTML = `❌ <strong>Error:</strong> ${err.message}`;
+      } finally {
+        convertMp4FreeConvertBtn.disabled = false;
+        convertMp4FreeConvertBtn.innerText = origText;
       }
     });
 
