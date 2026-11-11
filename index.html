@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KALKAL VIDEO - Studio</title>
+
+  <!-- WEBM DURATION FIXER PARA SA YOUTUBE AT PLAYERS -->
+  <script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
+
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(18, 22, 34, 0.94);
+      --card-border: rgba(255, 255, 255, 0.09);
+      --accent-cyan: #00f0ff;
+      --accent-pink: #ff0055;
+      --accent-glow: rgba(0, 240, 255, 0.35);
+      --text-main: #f0f4fc;
+      --text-muted: #8b95a8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at top center, #141b2b, var(--bg) 75%);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    /* TOP HEADER */
+    header {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(90deg, #fff, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .badge-status {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--accent-cyan);
+    }
+    .badge-status.exporting {
+      background: rgba(255, 0, 85, 0.2);
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+      animation: blink 0.8s infinite alternate;
+    }
+    @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+
+    /* 1. TOP: VIDEO CANVAS CONTAINER */
+    .video-container {
+      width: 100%;
+      max-width: 440px;
+      aspect-ratio: 1/1;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(0, 240, 255, 0.15);
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    /* FULL VIDEO EXPORT OVERLAY */
+    .export-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.94);
+      backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+      text-align: center;
+    }
+    .export-overlay.active { display: flex; }
+    .export-spinner {
+      font-size: 32px;
+      margin-bottom: 8px;
+      animation: pulseGlow 1s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { transform: scale(1); filter: drop-shadow(0 0 6px var(--accent-cyan)); }
+      to { transform: scale(1.15); filter: drop-shadow(0 0 20px var(--accent-pink)); }
+    }
+    .export-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .export-time {
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+    .export-bar {
+      width: 100%;
+      max-width: 270px;
+      height: 7px;
+      background: #1c2230;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .export-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink));
+      border-radius: 4px;
+      transition: width 0.2s ease;
+    }
+    .export-buttons-group {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-finish-now {
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #00f0ff, #0077ff);
+      border: none;
+      color: #000;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-cancel {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 0, 85, 0.2);
+      border: 1px solid var(--accent-pink);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--accent-pink); }
+
+    /* Audio Scrub Progress Bar */
+    .audio-bar {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+    .audio-progress {
+      flex: 1;
+      height: 5px;
+      background: #181d2a;
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+    }
+    .audio-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink));
+      border-radius: 3px;
+    }
+
+    /* 2. ROW 1 BUTTONS */
+    .main-actions-row {
+      display: grid;
+      grid-template-columns: 65px 1.4fr 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+      max-width: 440px;
+      margin-top: 10px;
+    }
+    .action-btn {
+      padding: 9px 4px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #fff;
+      background: #161a26;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .action-btn:hover { border-color: var(--accent-cyan); }
+    #playBtn {
+      background: #192030;
+      border-color: rgba(0, 240, 255, 0.3);
+      color: var(--accent-cyan);
+    }
+    #fullExportBtn {
+      background: linear-gradient(135deg, #00f0ff, #0077ff);
+      color: #000;
+      font-weight: 800;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0, 240, 255, 0.3);
+    }
+    #fullExportBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 240, 255, 0.5); }
+    #clipRecordBtn {
+      background: linear-gradient(135deg, #ff0055, #ff5500);
+      border: none;
+    }
+    #clipRecordBtn.recording { background: #ffaa00; color: #000; }
+    #audioTrackBtn {
+      background: #131824;
+      border: 1px dashed rgba(0, 240, 255, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    #audioTrackBtn input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* 3. ROW 2 TABS - 6 TABS */
+    .tabs-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      width: 100%;
+      max-width: 440px;
+      margin-top: 10px;
+    }
+    .tab-card {
+      background: #101420;
+      border: 1px solid var(--card-border);
+      border-radius: 9px;
+      padding: 7px 2px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .tab-card .tab-icon { font-size: 15px; }
+    .tab-card .tab-label {
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+    }
+    .tab-card:hover {
+      background: #161c2c;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .tab-card.active {
+      background: rgba(0, 240, 255, 0.12);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+    .tab-card.active .tab-label { color: var(--accent-cyan); }
+
+    /* 4. BOTTOM: DYNAMIC ADJUSTMENT PANEL */
+    .adjustments-panel {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 13px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .choice-pane {
+      display: none;
+      flex-direction: column;
+      gap: 11px;
+    }
+    .choice-pane.active { display: flex; }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .slider-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .slider-info span {
+      color: var(--accent-cyan);
+      font-family: monospace;
+    }
+
+    .slider-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #1a2030;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .step-btn:hover { background: var(--accent-cyan); color: #000; }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      background: #1c2232;
+      border-radius: 3px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    input[type="text"] {
+      background: #131722;
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 8px 10px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+      width: 100%;
+    }
+    input[type="text"]:focus { border-color: var(--accent-cyan); }
+
+    select {
+      background: #131722;
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 8px 10px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    select:focus { border-color: var(--accent-cyan); }
+
+    .upload-btn-card {
+      position: relative;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      font-size: 11px;
+      color: #fff;
+      overflow: hidden;
+    }
+    .upload-btn-card:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.05);
+    }
+    .upload-btn-card input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .file-name-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 4px 0;
+    }
+
+    /* POP-UP MODAL */
+    .save-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 6, 12, 0.94);
+      backdrop-filter: blur(14px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+    }
+    .save-modal-overlay.active { display: flex; }
+    .save-modal-box {
+      width: 100%;
+      max-width: 390px;
+      background: #111624;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 35px rgba(0, 240, 255, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: popIn 0.25s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .save-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+    .btn-close-modal {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #aaa;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-close-modal:hover { background: #ff0055; color: #fff; }
+
+    .preview-box {
+      width: 100%;
+      aspect-ratio: 1/1;
+      max-height: 210px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .video-info-badge {
+      font-size: 11px;
+      color: #00f0ff;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 6px;
+      padding: 5px 8px;
+      text-align: center;
+      font-family: monospace;
+      font-weight: 700;
+    }
+    .save-modal-desc {
+      font-size: 11.5px;
+      color: #cbd3e1;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .save-modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .save-act-btn {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-direct-download {
+      background: linear-gradient(135deg, #00f0ff, #0077ff);
+      color: #000;
+      box-shadow: 0 4px 18px rgba(0, 240, 255, 0.45);
+    }
+    .btn-share-gallery {
+      background: #1e2638;
+      color: #00f0ff;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+    }
+    .btn-player-open {
+      background: #141926;
+      color: #aaa;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 11px;
+      padding: 8px;
+    }
+    .save-guide-note {
+      font-size: 10.5px;
+      color: #00f0ff;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 8px;
+      padding: 8px;
+      line-height: 1.4;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand-title">⚡ KALKAL VIDEO</div>
+    <div class="badge-status" id="statusBadge">READY</div>
+  </header>
+
+  <!-- 1. VIDEO CONTAINER -->
+  <div class="video-container">
+    <canvas id="visualizer" width="800" height="800"></canvas>
+
+    <!-- FULL VIDEO EXPORT OVERLAY -->
+    <div class="export-overlay" id="exportOverlay">
+      <div class="export-spinner">🎬</div>
+      <div class="export-title" id="exportStatusTitle">Exporting Music Video...</div>
+      <div class="export-time" id="exportProgressText">00:00 / 00:00 (0%)</div>
+      <div class="export-bar">
+        <div class="export-fill" id="exportProgressFill"></div>
+      </div>
+      <div class="export-buttons-group">
+        <button class="btn-finish-now" id="finishExportNowBtn">✅ Tapusin & I-save Na</button>
+        <button class="btn-cancel" id="cancelExportBtn">✕ Kanselahin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Scrub Progress -->
+  <div class="audio-bar">
+    <span id="currentTime">00:00</span>
+    <div class="audio-progress" id="progressBar">
+      <div class="audio-progress-fill" id="progressFill"></div>
+    </div>
+    <span id="totalTime">00:00</span>
+  </div>
+
+  <!-- 2. ROW 1 BUTTONS -->
+  <div class="main-actions-row">
+    <button class="action-btn" id="playBtn" title="Play / Pause">▶ Play</button>
+    <button class="action-btn" id="fullExportBtn" title="Export buong kanta mula umpisa">🎬 Full Video</button>
+    <button class="action-btn" id="clipRecordBtn" title="Record custom clip">🔴 Clip</button>
+    <label class="action-btn" id="audioTrackBtn">
+      <span>🎵 Audio</span>
+      <input type="file" id="audioUpload" accept="audio/*" />
+    </label>
+  </div>
+
+  <!-- 3. ROW 2 TABS - 6 TABS -->
+  <div class="tabs-row">
+    <div class="tab-card active" data-choice="spectrumPane">
+      <span class="tab-icon">📁</span>
+      <span class="tab-label">Spectrum</span>
+    </div>
+    <div class="tab-card" data-choice="logoPane">
+      <span class="tab-icon">📁</span>
+      <span class="tab-label">Logo</span>
+    </div>
+    <div class="tab-card" data-choice="beatPane">
+      <span class="tab-icon">📁</span>
+      <span class="tab-label">Beat</span>
+    </div>
+    <div class="tab-card" data-choice="captionPane" style="border-color:rgba(0, 240, 255, 0.4);">
+      <span class="tab-icon">📝</span>
+      <span class="tab-label" style="color:#00f0ff;">Caption</span>
+    </div>
+    <div class="tab-card" data-choice="wallpaperPane">
+      <span class="tab-icon">📁</span>
+      <span class="tab-label">Wallpaper</span>
+    </div>
+    <div class="tab-card" data-choice="particlePane">
+      <span class="tab-icon">✨</span>
+      <span class="tab-label">Particles</span>
+    </div>
+  </div>
+
+  <!-- 4. BOTTOM: DYNAMIC ADJUSTMENT PANEL -->
+  <div class="adjustments-panel">
+
+    <!-- SUB-PANE 1: SPECTRUM -->
+    <div class="choice-pane active" id="spectrumPane">
+      <div class="panel-title">Spectrum & Elemental Lava Umbok</div>
+      <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap: 8px;">
+        <select id="styleSelect">
+          <optgroup label="🔥 Elemental Lava (Multi-Instrument Reactive)">
+            <option value="lava_neon">🌋 1. Neon Style Lava (Electric Umbok)</option>
+            <option value="lava_dark" selected>🌋 2. Dark Obsidian Lava (Pulang Magma)</option>
+            <option value="lava_ice">❄️ 3. Ice Glacial Liquid (Cryo Frost)</option>
+            <option value="lava_sand">🏜️ 4. Sand Dune Fluid (Desert Storm)</option>
+          </optgroup>
+          <optgroup label="📻 5 Lumang Style na Spectrum (Classic Vintage)">
+            <option value="vu_meter">📻 1. Dual Analog VU Meter Needles (Vintage Gauge)</option>
+            <option value="retro_led">📟 2. Hi-Fi Segmented LED Blocks (80s Stereo)</option>
+            <option value="crt_oscilloscope">⚡ 3. Winamp Neon Oscilloscope (Cathode Tube)</option>
+            <option value="synthwave_grid">🌆 4. 80s Synthwave Horizon Wireframe Grid</option>
+            <option value="vinyl_groove">💿 5. Classic 70s Spinning Vinyl Grooves</option>
+          </optgroup>
+          <optgroup label="Classic Visualizers">
+            <option value="ncs">NCS Radial Spikes (Classic)</option>
+            <option value="trap">Trap Nation Dual (In & Out)</option>
+            <option value="wave">Smooth Liquid Wave (Blob)</option>
+            <option value="linear">Bottom Equalizer (Linear Bars)</option>
+            <option value="dots_radial">Floating Neon Dots (Avee Style)</option>
+            <option value="double_ring">Dual Orbit Waveform (Inner/Outer)</option>
+            <option value="hexagon">Cyberpunk Hexagon (Techno 6-Side)</option>
+            <option value="sunburst">Sunburst Corona (Sawtooth Rays)</option>
+          </optgroup>
+        </select>
+
+        <select id="colorSelect">
+          <option value="rainbow">🌈 Rainbow Glow</option>
+          <option value="cyan">💎 Neon Cyan</option>
+          <option value="purple">🔮 Electric Magenta</option>
+          <option value="gold">🔥 Solar Flare Gold</option>
+        </select>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Laki ng Umbok sa Palo ng Tugtog</label>
+          <span id="barHeightVal">120px</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('barHeightSlider', -5)">−</div>
+          <input type="range" id="barHeightSlider" min="30" max="260" step="5" value="120" />
+          <div class="step-btn" onclick="stepSlider('barHeightSlider', 5)">+</div>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Kapal ng Pulang Gilid / Border</label>
+          <span id="barWidthVal">4.0px</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('barWidthSlider', -0.5)">−</div>
+          <input type="range" id="barWidthSlider" min="1.5" max="12" step="0.5" value="4.0" />
+          <div class="step-btn" onclick="stepSlider('barWidthSlider', 0.5)">+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-PANE 2: CENTER LOGO -->
+    <div class="choice-pane" id="logoPane">
+      <div class="panel-title">Center Logo (Fixed & Steady Size)</div>
+      <div class="upload-btn-card">
+        <div>🖼️ Choose Center Logo Image</div>
+        <div class="file-name-sub" id="logoFileName">No image selected</div>
+        <input type="file" id="logoUpload" accept="image/*" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Center Logo Size</label>
+          <span id="centerSizeVal">125px</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('centerSizeSlider', -5)">−</div>
+          <input type="range" id="centerSizeSlider" min="10" max="240" step="5" value="125" />
+          <div class="step-btn" onclick="stepSlider('centerSizeSlider', 5)">+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-PANE 3: BEAT REACTION -->
+    <div class="choice-pane" id="beatPane">
+      <div class="panel-title">Beat Reaction & Instrument Controller</div>
+      <select id="beatEffectSelect">
+        <optgroup label="📻 5 Lumang Style na Beat (Super Ganda Retro)">
+          <option value="vhs_glitch">📼 1. 90s VHS Tape Glitch & Jitter</option>
+          <option value="crt_tv">📺 2. Retro CRT Scanline Phosphor Pulse</option>
+          <option value="vinyl_wobble">📻 3. Vintage Vinyl Turntable Flutter</option>
+          <option value="retro_strobe">🪩 4. 80s Disco Neon Ghost Echo</option>
+          <option value="heartbeat_warm">🕯️ 5. Warm Tube Amp Vacuum Pulse</option>
+        </optgroup>
+        <optgroup label="🔥 Modern Beats">
+          <option value="combo">🔥 Wild Party Combo (Zoom+Shake+Flash)</option>
+          <option value="zoom">💥 Zoom Punch (Bass Kick)</option>
+          <option value="shake">🌋 Earthquake Shake (Lindol)</option>
+          <option value="flash">⚡ Strobe Flash (Light Pulse)</option>
+          <option value="tilt">🌀 Wobble & Tilt (Sway)</option>
+        </optgroup>
+        <option value="none">None (Static Screen)</option>
+      </select>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Lakas ng Palo (Multi-Instrument Sensitivity)</label>
+          <span id="sensVal">2.2x</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('sensitivity', -0.1)">−</div>
+          <input type="range" id="sensitivity" min="0.1" max="5.0" step="0.1" value="2.2" />
+          <div class="step-btn" onclick="stepSlider('sensitivity', 0.1)">+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-PANE 4: 📝 CAPTION & TEXT DESIGN ENGINE -->
+    <div class="choice-pane" id="captionPane">
+      <div class="panel-title" style="color:#00f0ff;">📝 Caption & Text Design (Beat-Reactive)</div>
+
+      <div class="slider-row">
+        <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Ilagay ang Pamagat o Caption:</label>
+        <input type="text" id="captionInput" placeholder="Hal: KALKAL REMIX (BASS BOOSTED)" value="KALKAL REMIX" />
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="slider-row">
+          <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Text Design Style:</label>
+          <select id="captionStyleSelect">
+            <option value="neon_cyan" selected>💎 1. Neon Cyber Cyan</option>
+            <option value="magma_fire">🔥 2. Fiery Magma Lava</option>
+            <option value="gold_chrome">👑 3. 3D Metallic Gold</option>
+            <option value="retro_synth">🌆 4. 80s Retro Synthwave</option>
+            <option value="rgb_glitch">⚡ 5. RGB Hologram Glitch</option>
+            <option value="glass_minimal">🤍 6. Minimalist Glass Badge</option>
+            <option value="street_bold">🖤 7. Streetwear Bold Stroke</option>
+          </select>
+        </div>
+
+        <div class="slider-row">
+          <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Beat Reaction ng Text:</label>
+          <select id="captionBeatSelect">
+            <option value="punch" selected>💥 Bass Punch & Pop</option>
+            <option value="glow">✨ Glow Flash</option>
+            <option value="wobble">🌀 Wobble Tilt</option>
+            <option value="jitter">⚡ Glitch Jitter</option>
+            <option value="none">🚫 Static (No Beat)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Laki ng Text (Size)</label>
+          <span id="captionSizeVal">38px</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('captionSizeSlider', -2)">−</div>
+          <input type="range" id="captionSizeSlider" min="18" max="75" step="1" value="38" />
+          <div class="step-btn" onclick="stepSlider('captionSizeSlider', 2)">+</div>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Posisyon (Taas / Baba)</label>
+          <span id="captionYVal">690px</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('captionYSlider', -10)">−</div>
+          <input type="range" id="captionYSlider" min="60" max="740" step="5" value="690" />
+          <div class="step-btn" onclick="stepSlider('captionYSlider', 10)">+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-PANE 5: WALLPAPER -->
+    <div class="choice-pane" id="wallpaperPane">
+      <div class="panel-title">Wallpaper Cover</div>
+      <div class="upload-btn-card">
+        <div>🌄 Choose Background Wallpaper</div>
+        <div class="file-name-sub" id="bgFileName">No image selected</div>
+        <input type="file" id="bgUpload" accept="image/*" />
+      </div>
+    </div>
+
+    <!-- SUB-PANE 6: PARTICLES AT PYRO ENGINE -->
+    <div class="choice-pane" id="particlePane">
+      <div class="panel-title">Particles & Pyro Fire Controls</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="slider-row" style="min-width: 0;">
+          <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Particle Motion</label>
+          <select id="particleMotionSelect">
+            <optgroup label="⚡ Special Physics">
+              <option value="synapse" selected>⚡ Neural Synapse</option>
+              <option value="celestial">🪐 Celestial Rings</option>
+              <option value="deepsea">🪼 Deep-Sea Bio</option>
+            </optgroup>
+            <optgroup label="Classic Motions">
+              <option value="burst">💥 Radial Burst</option>
+              <option value="warp">🚀 3D Warp</option>
+              <option value="rain">❄️ Rain / Snow</option>
+              <option value="embers">✨ Stardust Float</option>
+              <option value="none">🚫 Off</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="slider-row" style="min-width: 0;">
+          <label style="font-size:10px; color:var(--text-muted); font-weight:600;">Particle Shape</label>
+          <select id="particleShapeSelect">
+            <option value="dots">⚪ Glowing Nodes</option>
+            <option value="stars">✦ Shimmer Stars</option>
+            <option value="notes">♪ Music Notes</option>
+            <option value="diamonds">◆ Geometric Prism</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Particle Speed</label>
+          <span id="particleSpeedVal">0.30x</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('particleSpeedSlider', -0.02)">−</div>
+          <input type="range" id="particleSpeedSlider" min="0.01" max="2.0" step="0.01" value="0.30" />
+          <div class="step-btn" onclick="stepSlider('particleSpeedSlider', 0.02)">+</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label style="color: #ffaa00; font-weight: 700;">🔥 Pyro & Fire Effects</label>
+          <span id="pyroStatusLabel">ON</span>
+        </div>
+        <select id="pyroEffectSelect">
+          <option value="random_logo" selected>🔥 1. Random Fireball Blast</option>
+          <option value="firework_fountain">🎆 2. Fireworks Fountain</option>
+          <option value="diag_fire">☄️ 3. Diagonal Fireball</option>
+          <option value="combo_all">💥 4. Full Pyro Combo</option>
+          <option value="none">🚫 Off</option>
+        </select>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Pyro Speed</label>
+          <span id="pyroSpeedVal">0.35x</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('pyroSpeedSlider', -0.05)">−</div>
+          <input type="range" id="pyroSpeedSlider" min="0.05" max="2.5" step="0.05" value="0.35" />
+          <div class="step-btn" onclick="stepSlider('pyroSpeedSlider', 0.05)">+</div>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-info">
+          <label>Pyro Frequency</label>
+          <span id="pyroFreqVal">1.5x</span>
+        </div>
+        <div class="slider-control">
+          <div class="step-btn" onclick="stepSlider('pyroFreqSlider', -0.2)">−</div>
+          <input type="range" id="pyroFreqSlider" min="0.5" max="3.0" step="0.2" value="1.5" />
+          <div class="step-btn" onclick="stepSlider('pyroFreqSlider', 0.2)">+</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- POP-UP SA GITNA -->
+  <div class="save-modal-overlay" id="saveSuccessModal">
+    <div class="save-modal-box">
+      <div class="save-modal-header">
+        <span>🎬 Video Ready!</span>
+        <button class="btn-close-modal" id="closeSaveModalBtn">✕</button>
+      </div>
+      <div class="preview-box">
+        <video id="finishedVideoPreview" controls playsinline autoplay loop></video>
+      </div>
+      <div class="video-info-badge" id="videoDurationBadge">⏱️ Haba ng Video: 00:00 (YouTube Ready)</div>
+      <div class="save-modal-desc">
+        Piliin ang <strong>"I-download ang Video File"</strong> para ma-save agad nang buo at may tamang haba para sa YouTube:
+      </div>
+      <div class="save-modal-actions">
+        <button class="save-act-btn btn-direct-download" id="saveDirectDownloadBtn">
+          ⬇️ I-download ang Video File (.mp4/.webm)
+        </button>
+        <button class="save-act-btn btn-share-gallery" id="shareToGalleryBtn">
+          📲 I-save sa Gallery / Photos (Share Menu)
+        </button>
+        <button class="save-act-btn btn-player-open" id="openPlayerBtn">
+          ▶ Buksan sa Fullscreen Player
+        </button>
+      </div>
+      <div class="save-guide-note">
+        ✅ <strong>Smooth & Swabe:</strong> Naka-optimize na ang video encoder, may caption, at walang lag ang playback sa cellphone at YouTube!
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <script>
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const fullExportBtn = document.getElementById('fullExportBtn');
+    const clipRecordBtn = document.getElementById('clipRecordBtn');
+    const statusBadge = document.getElementById('statusBadge');
+
+    const saveSuccessModal = document.getElementById('saveSuccessModal');
+    const finishedVideoPreview = document.getElementById('finishedVideoPreview');
+    const videoDurationBadge = document.getElementById('videoDurationBadge');
+    const closeSaveModalBtn = document.getElementById('closeSaveModalBtn');
+    const saveDirectDownloadBtn = document.getElementById('saveDirectDownloadBtn');
+    const shareToGalleryBtn = document.getElementById('shareToGalleryBtn');
+    const openPlayerBtn = document.getElementById('openPlayerBtn');
+
+    const exportOverlay = document.getElementById('exportOverlay');
+    const exportStatusTitle = document.getElementById('exportStatusTitle');
+    const exportProgressText = document.getElementById('exportProgressText');
+    const exportProgressFill = document.getElementById('exportProgressFill');
+    const cancelExportBtn = document.getElementById('cancelExportBtn');
+    const finishExportNowBtn = document.getElementById('finishExportNowBtn');
+
+    const styleSelect = document.getElementById('styleSelect');
+    const colorSelect = document.getElementById('colorSelect');
+    const beatEffectSelect = document.getElementById('beatEffectSelect');
+
+    const captionInput = document.getElementById('captionInput');
+    const captionStyleSelect = document.getElementById('captionStyleSelect');
+    const captionBeatSelect = document.getElementById('captionBeatSelect');
+    const captionSizeSlider = document.getElementById('captionSizeSlider');
+    const captionSizeVal = document.getElementById('captionSizeVal');
+    const captionYSlider = document.getElementById('captionYSlider');
+    const captionYVal = document.getElementById('captionYVal');
+
+    const particleMotionSelect = document.getElementById('particleMotionSelect');
+    const particleShapeSelect = document.getElementById('particleShapeSelect');
+    const particleSpeedSlider = document.getElementById('particleSpeedSlider');
+    const particleSpeedVal = document.getElementById('particleSpeedVal');
+
+    const pyroEffectSelect = document.getElementById('pyroEffectSelect');
+    const pyroStatusLabel = document.getElementById('pyroStatusLabel');
+    const pyroSpeedSlider = document.getElementById('pyroSpeedSlider');
+    const pyroSpeedVal = document.getElementById('pyroSpeedVal');
+    const pyroFreqSlider = document.getElementById('pyroFreqSlider');
+    const pyroFreqVal = document.getElementById('pyroFreqVal');
+
+    const centerSizeSlider = document.getElementById('centerSizeSlider');
+    const barHeightSlider = document.getElementById('barHeightSlider');
+    const barWidthSlider = document.getElementById('barWidthSlider');
+    const sensitivitySlider = document.getElementById('sensitivity');
+
+    const centerSizeVal = document.getElementById('centerSizeVal');
+    const barHeightVal = document.getElementById('barHeightVal');
+    const barWidthVal = document.getElementById('barWidthVal');
+    const sensVal = document.getElementById('sensVal');
+
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeText = document.getElementById('currentTime');
+    const totalTimeText = document.getElementById('totalTime');
+
+    let audioCtx, analyser, source, mediaStreamDest;
+    let centerImg = null, bgImg = null;
+    let dataArray;
+    let isInitialized = false;
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let isFullExporting = false;
+    let recordStartTime = 0;
+    let recordInterval = null;
+    let uploadedSongName = "kalkal-music-video";
+
+    let currentExportBlob = null;
+    let currentExportFileName = "";
+
+    function getRecordingMime() {
+      const types = [
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=vp9,opus',
+        'video/webm',
+        'video/mp4'
+      ];
+      for (const t of types) {
+        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
+          return t;
+        }
+      }
+      return 'video/webm';
+    }
+
+    const preferredMime = getRecordingMime();
+    const fileExt = preferredMime.includes('mp4') ? 'mp4' : 'webm';
+
+    // Multi-instrument sensors
+    let lastKick = 0, kickImpulse = 0;
+    let lastBassGtr = 0, bassGtrImpulse = 0;
+    let lastGuitar = 0, guitarImpulse = 0;
+    let lastSnare = 0, snareImpulse = 0;
+    let lastCymbals = 0, cymbalImpulse = 0;
+
+    let vuLeftNeedle = 0, vuRightNeedle = 0;
+    let ledPeaks = new Array(36).fill(0);
+
+    const TOTAL_PARTICLES = 65;
+    const particles = Array.from({ length: TOTAL_PARTICLES }, () => ({
+      x: (Math.random() - 0.5) * canvas.width * 0.85,
+      y: (Math.random() - 0.5) * canvas.height * 0.85,
+      vx: (Math.random() - 0.5) * 1.1,
+      vy: (Math.random() - 0.5) * 1.1,
+      z: Math.random() * canvas.width,
+      dist: 120 + Math.random() * 240,
+      angle: Math.random() * Math.PI * 2,
+      orbitSpeed: (Math.random() * 0.008 + 0.002) * (Math.random() > 0.5 ? 1 : -1),
+      orbitTilt: (Math.random() * 0.4 + 0.3),
+      speed: Math.random() * 0.7 + 0.3,
+      baseSize: Math.random() * 2 + 1.5,
+      alpha: Math.random() * 0.6 + 0.4,
+      noteChar: ['♪', '♫', '♬'][Math.floor(Math.random() * 3)]
+    }));
+
+    let pyros = [];
+    let pyroCooldown = 0;
+
+    function spawnRandomLogoFireballs(cx, cy, radius, count = 2) {
+      for (let k = 0; k < count; k++) {
+        const angle = Math.random() * Math.PI * 2;
+        pyros.push({
+          type: 'logo_fireball',
+          x: cx + Math.cos(angle) * radius,
+          y: cy + Math.sin(angle) * radius,
+          angle: angle,
+          dist: radius,
+          baseDist: radius,
+          baseSpeed: 1.1 + Math.random() * 0.7,
+          size: Math.random() * 4 + 7,
+          alpha: 0.1,
+          wobbleRate: (Math.random() - 0.5) * 0.03,
+          trail: []
+        });
+      }
+    }
+
+    function spawnFireworkFountain(count = 2) {
+      for (let k = 0; k < count; k++) {
+        const startX = canvas.width * 0.5 + (Math.random() - 0.5) * (canvas.width * 0.6);
+        const launchAngle = -Math.PI * 0.5 + (Math.random() - 0.5) * 0.7;
+        const launchSpeed = Math.random() * 5 + 13;
+        pyros.push({
+          type: 'firework',
+          x: startX,
+          y: canvas.height + 15,
+          vx: Math.cos(launchAngle) * launchSpeed,
+          vy: Math.sin(launchAngle) * launchSpeed,
+          gravity: 0.32,
+          size: Math.random() * 4 + 5,
+          alpha: 1,
+          drift: (Math.random() - 0.5) * 0.5,
+          hasPopped: false,
+          trail: []
+        });
+      }
+    }
+
+    function spawnDiagonalFireballs(cx, cy, radius) {
+      const angles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+      angles.forEach(angle => {
+        pyros.push({
+          type: 'logo_fireball',
+          x: cx + Math.cos(angle) * radius,
+          y: cy + Math.sin(angle) * radius,
+          angle: angle,
+          dist: radius,
+          baseDist: radius,
+          baseSpeed: 1.2 + Math.random() * 0.5,
+          size: 7.5,
+          alpha: 0.1,
+          wobbleRate: 0,
+          trail: []
+        });
+      });
+    }
+
+    // Tabs
+    const tabCards = document.querySelectorAll('.tab-card');
+    const choicePanes = document.querySelectorAll('.choice-pane');
+
+    tabCards.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabCards.forEach(t => t.classList.remove('active'));
+        choicePanes.forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const targetPane = document.getElementById(tab.dataset.choice);
+        if (targetPane) targetPane.classList.add('active');
+      });
+    });
+
+    function stepSlider(sliderId, step) {
+      const slider = document.getElementById(sliderId);
+      const val = parseFloat(slider.value) + step;
+      slider.value = Math.min(parseFloat(slider.max), Math.max(parseFloat(slider.min), val));
+      slider.dispatchEvent(new Event('input'));
+    }
+
+    centerSizeSlider.addEventListener('input', e => { centerSizeVal.innerText = `${e.target.value}px`; if (audio.paused) renderFrame(); });
+    barHeightSlider.addEventListener('input', e => { barHeightVal.innerText = `${e.target.value}px`; if (audio.paused) renderFrame(); });
+    barWidthSlider.addEventListener('input', e => { barWidthVal.innerText = `${parseFloat(e.target.value).toFixed(1)}px`; if (audio.paused) renderFrame(); });
+    sensitivitySlider.addEventListener('input', e => { sensVal.innerText = `${parseFloat(e.target.value).toFixed(1)}x`; if (audio.paused) renderFrame(); });
+    particleSpeedSlider.addEventListener('input', e => { particleSpeedVal.innerText = `${parseFloat(e.target.value).toFixed(2)}x`; if (audio.paused) renderFrame(); });
+    pyroSpeedSlider.addEventListener('input', e => { pyroSpeedVal.innerText = `${parseFloat(e.target.value).toFixed(2)}x`; if (audio.paused) renderFrame(); });
+    pyroFreqSlider.addEventListener('input', e => { pyroFreqVal.innerText = `${parseFloat(e.target.value).toFixed(1)}x`; });
+
+    captionSizeSlider.addEventListener('input', e => { captionSizeVal.innerText = `${e.target.value}px`; if (audio.paused) renderFrame(); });
+    captionYSlider.addEventListener('input', e => { captionYVal.innerText = `${e.target.value}px`; if (audio.paused) renderFrame(); });
+    captionInput.addEventListener('input', () => { if (audio.paused) renderFrame(); });
+    captionStyleSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+    captionBeatSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+
+    pyroEffectSelect.addEventListener('change', e => {
+      pyroStatusLabel.innerText = e.target.value === 'none' ? 'OFF' : 'ON';
+      if (audio.paused) renderFrame();
+    });
+
+    particleMotionSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+    particleShapeSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+    styleSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+    colorSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+    beatEffectSelect.addEventListener('change', () => { if (audio.paused) renderFrame(); });
+
+    document.getElementById('audioUpload').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        audio.src = URL.createObjectURL(file);
+        uploadedSongName = file.name.replace(/\.[^/.]+$/, "");
+        if (!captionInput.value || captionInput.value === "KALKAL REMIX") {
+          captionInput.value = uploadedSongName.toUpperCase();
+        }
+      }
+    });
+
+    document.getElementById('logoUpload').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => { centerImg = img; if (audio.paused) renderFrame(); };
+        document.getElementById('logoFileName').innerText = file.name;
+      }
+    });
+
+    document.getElementById('bgUpload').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => { bgImg = img; if (audio.paused) renderFrame(); };
+        document.getElementById('bgFileName').innerText = file.name;
+      }
+    });
+
+    function initAudio() {
+      if (isInitialized) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+
+      source = audioCtx.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+      mediaStreamDest = audioCtx.createMediaStreamDestination();
+      source.connect(mediaStreamDest);
+
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+      isInitialized = true;
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (!audio.src) { alert("Pumili muna ng audio file sa '🎵 Audio'!"); return; }
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (audio.paused) {
+        audio.play();
+        playBtn.innerText = "⏸ Pause";
+        statusBadge.innerText = "PLAYING";
+        render();
+      } else {
+        audio.pause();
+        playBtn.innerText = "▶ Play";
+        statusBadge.innerText = "PAUSED";
+      }
+    });
+
+    function formatTime(secs) {
+      if (isNaN(secs)) return "00:00";
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration) return;
+      const progress = (audio.currentTime / audio.duration) * 100;
+      progressFill.style.width = `${progress}%`;
+      currentTimeText.innerText = formatTime(audio.currentTime);
+      totalTimeText.innerText = formatTime(audio.duration);
+
+      if (isFullExporting) {
+        const pct = Math.min(100, Math.floor(progress));
+        exportProgressText.innerText = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)} (${pct}%)`;
+        exportProgressFill.style.width = `${pct}%`;
+      }
+    });
+
+    progressBar.addEventListener('click', e => {
+      if (!audio.duration || isFullExporting) return;
+      const rect = progressBar.getBoundingClientRect();
+      audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+    });
+
+    function getColor(i, total) {
+      const theme = colorSelect.value;
+      if (theme === 'rainbow') return `hsl(${(i / total) * 360}, 95%, 60%)`;
+      if (theme === 'cyan') return `hsl(185, 100%, ${50 + (i / total) * 35}%)`;
+      if (theme === 'purple') return `hsl(${280 + (i / total) * 70}, 95%, 65%)`;
+      if (theme === 'gold') return `hsl(${32 + (i / total) * 30}, 100%, 55%)`;
+    }
+
+    function render() {
+      if (!audio.paused || isRecording) requestAnimationFrame(render);
+      renderFrame();
+    }
+
+    // =========================================================================
+    // 🌋 1. ELEMENTAL LAVA UMBOK
+    // =========================================================================
+    function drawElementalLavaUmbok(cx, cy, baseRadius, lavaType, totalPower, guitarStrum, userBarHeight, userBarThickness, instLevels) {
+      const points = 90;
+      const angleStep = (Math.PI * 2) / points;
+      const time = Date.now() * 0.0035;
+
+      ctx.save();
+      ctx.beginPath();
+      for (let i = 0; i <= points; i++) {
+        const theta = i * angleStep;
+        let r = baseRadius;
+        const freqBin = Math.floor(((Math.sin(theta) + 1) * 0.5) * 45);
+        const freqVal = (dataArray ? dataArray[freqBin] : 20) / 255;
+        const angleFactor = Math.abs(Math.sin(theta)) * (instLevels.bass * 1.1 + instLevels.bassGtr * 0.7) +
+                            Math.abs(Math.cos(theta)) * (instLevels.guitar * 1.0 + instLevels.snare * 0.8) +
+                            (instLevels.cymbals * 0.4);
+
+        if (totalPower > 0.01 || angleFactor > 0.02) {
+          const wave1 = Math.sin(theta * 3 * (1 + guitarStrum * 0.8) + time * 2.5);
+          const wave2 = Math.cos(theta * 5 + time * 2.0);
+          const wave3 = Math.sin(theta * 7 - time * 3.2);
+          const wave = Math.max(0.05, wave1 * 0.45 + wave2 * 0.35 + wave3 * 0.2);
+          const instrumentLakas = (angleFactor * 0.6 + totalPower * 0.4);
+          r = baseRadius + (wave * userBarHeight * instrumentLakas * (0.5 + freqVal * 0.5));
+        }
+
+        const x = cx + Math.cos(theta) * r;
+        const y = cy + Math.sin(theta) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+
+      const safeGlow = isRecording ? 8 : 16;
+
+      if (lavaType === 'lava_dark') {
+        const magmaLakas = Math.min(1.5, totalPower * 1.25);
+        const dGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.55, cx, cy, baseRadius + userBarHeight * Math.max(0.15, magmaLakas));
+        dGrad.addColorStop(0, '#0a0303');
+        dGrad.addColorStop(0.4, '#190707');
+        dGrad.addColorStop(0.75, `rgba(${Math.floor(200 + magmaLakas * 55)}, ${Math.floor(15 + magmaLakas * 40)}, 0, ${Math.min(1, 0.4 + magmaLakas * 0.6)})`);
+        dGrad.addColorStop(1, magmaLakas > 0.2 ? '#ffcc00' : 'rgba(255, 45, 0, 0.75)');
+        ctx.fillStyle = dGrad;
+        ctx.fill();
+
+        const dynamicBorderThickness = userBarThickness * (1 + magmaLakas * 0.85);
+        ctx.lineWidth = dynamicBorderThickness;
+        ctx.strokeStyle = `rgb(255, ${Math.min(120, Math.floor(magmaLakas * 85))}, 0)`;
+        ctx.shadowColor = '#ff1100';
+        ctx.shadowBlur = Math.min(safeGlow, 3 + magmaLakas * 10);
+        ctx.stroke();
+
+        if (magmaLakas > 0.08) {
+          const crackCount = Math.min(8, Math.floor(4 + magmaLakas * 4));
+          for (let c = 0; c < crackCount; c++) {
+            const cAngle = (c * (Math.PI * 2) / crackCount) + Math.sin(time + c) * 0.2;
+            const crackReach = baseRadius + (userBarHeight * 0.8 * magmaLakas);
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(cAngle) * baseRadius, cy + Math.sin(cAngle) * baseRadius);
+            ctx.lineTo(cx + Math.cos(cAngle) * crackReach, cy + Math.sin(cAngle) * crackReach);
+            ctx.strokeStyle = magmaLakas > 0.4 ? '#ffdd55' : 'rgba(255, 60, 0, 0.85)';
+            ctx.lineWidth = Math.max(1, dynamicBorderThickness * 0.5 * magmaLakas);
+            ctx.stroke();
+          }
+        }
+      } else if (lavaType === 'lava_neon') {
+        const nGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, baseRadius + userBarHeight * Math.max(0.1, totalPower));
+        nGrad.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
+        nGrad.addColorStop(0.5, 'rgba(255, 0, 110, 0.7)');
+        nGrad.addColorStop(0.85, 'rgba(128, 0, 255, 0.9)');
+        nGrad.addColorStop(1, '#00f0ff');
+        ctx.fillStyle = nGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = userBarThickness * (1 + totalPower * 0.6);
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = safeGlow;
+        ctx.stroke();
+      } else if (lavaType === 'lava_ice') {
+        const iGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.5, cx, cy, baseRadius + userBarHeight * Math.max(0.1, totalPower));
+        iGrad.addColorStop(0, 'rgba(0, 180, 255, 0.2)');
+        iGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.65)');
+        iGrad.addColorStop(0.85, 'rgba(180, 250, 255, 0.85)');
+        iGrad.addColorStop(1, '#ffffff');
+        ctx.fillStyle = iGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#e0ffff';
+        ctx.lineWidth = userBarThickness * (1 + totalPower * 0.6);
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = safeGlow;
+        ctx.stroke();
+      } else if (lavaType === 'lava_sand') {
+        const sGrad = ctx.createRadialGradient(cx, cy, baseRadius * 0.4, cx, cy, baseRadius + userBarHeight * Math.max(0.1, totalPower));
+        sGrad.addColorStop(0, '#362210');
+        sGrad.addColorStop(0.45, '#8c5826');
+        sGrad.addColorStop(0.75, 'rgba(230, 161, 92, 0.85)');
+        sGrad.addColorStop(1, '#ffe082');
+        ctx.fillStyle = sGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#ffd54f';
+        ctx.lineWidth = userBarThickness * (1 + totalPower * 0.6);
+        ctx.shadowColor = '#ffb300';
+        ctx.shadowBlur = safeGlow;
+        ctx.stroke();
+      }
+      ctx.restore();
+      drawLogo(cx, cy, baseRadius);
+    }
+
+    // =========================================================================
+    // 📝 2. BEAT-REACTIVE CAPTION / TEXT DESIGN ENGINE
+    // =========================================================================
+    function drawCaption(cx, totalPower) {
+      const text = captionInput.value.trim();
+      if (!text) return;
+
+      const baseFontSize = parseFloat(captionSizeSlider.value);
+      const textY = parseFloat(captionYSlider.value);
+      const styleType = captionStyleSelect.value;
+      const beatType = captionBeatSelect.value;
+
+      let scale = 1;
+      let rot = 0;
+      let jitterX = 0, jitterY = 0;
+      let extraGlow = 0;
+
+      if (beatType === 'punch') {
+        scale = 1 + (totalPower * 0.22);
+      } else if (beatType === 'glow') {
+        extraGlow = totalPower * 25;
+      } else if (beatType === 'wobble') {
+        rot = Math.sin(Date.now() * 0.012) * 0.08 * totalPower;
+      } else if (beatType === 'jitter') {
+        if (totalPower > 0.15) {
+          jitterX = (Math.random() - 0.5) * 12 * totalPower;
+          jitterY = (Math.random() - 0.5) * 12 * totalPower;
+        }
+      }
+
+      ctx.save();
+      ctx.translate(cx + jitterX, textY + jitterY);
+      ctx.scale(scale, scale);
+      ctx.rotate(rot);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const actualFontSize = Math.floor(baseFontSize);
+      ctx.font = `900 ${actualFontSize}px -apple-system, BlinkMacSystemFont, "Impact", "Arial Black", sans-serif`;
+
+      // 1. NEON CYBER CYAN
+      if (styleType === 'neon_cyan') {
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 10 + extraGlow;
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = Math.max(2, actualFontSize * 0.08);
+        ctx.strokeText(text, 0, 0);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(text, 0, 0);
+
+      // 2. FIERY MAGMA LAVA
+      } else if (styleType === 'magma_fire') {
+        const fireGrad = ctx.createLinearGradient(0, -actualFontSize * 0.5, 0, actualFontSize * 0.5);
+        fireGrad.addColorStop(0, '#fff59d');
+        fireGrad.addColorStop(0.4, '#ff9800');
+        fireGrad.addColorStop(1, '#ff1744');
+
+        ctx.shadowColor = '#ff3d00';
+        ctx.shadowBlur = 12 + extraGlow;
+        ctx.strokeStyle = '#2b0600';
+        ctx.lineWidth = Math.max(3, actualFontSize * 0.12);
+        ctx.strokeText(text, 0, 0);
+
+        ctx.fillStyle = fireGrad;
+        ctx.fillText(text, 0, 0);
+
+      // 3. 3D METALLIC GOLD
+      } else if (styleType === 'gold_chrome') {
+        const goldGrad = ctx.createLinearGradient(0, -actualFontSize * 0.6, 0, actualFontSize * 0.6);
+        goldGrad.addColorStop(0, '#ffffff');
+        goldGrad.addColorStop(0.3, '#ffe082');
+        goldGrad.addColorStop(0.6, '#ffb300');
+        goldGrad.addColorStop(1, '#ff6f00');
+
+        ctx.shadowColor = '#ffb300';
+        ctx.shadowBlur = 8 + extraGlow;
+        ctx.strokeStyle = '#2e1c02';
+        ctx.lineWidth = Math.max(3, actualFontSize * 0.1);
+        ctx.strokeText(text, 0, 0);
+
+        ctx.fillStyle = goldGrad;
+        ctx.fillText(text, 0, 0);
+
+      // 4. 80s RETRO SYNTHWAVE
+      } else if (styleType === 'retro_synth') {
+        const synthGrad = ctx.createLinearGradient(0, -actualFontSize * 0.5, 0, actualFontSize * 0.5);
+        synthGrad.addColorStop(0, '#00f0ff');
+        synthGrad.addColorStop(0.5, '#f50057');
+        synthGrad.addColorStop(1, '#7c4dff');
+
+        ctx.shadowColor = '#f50057';
+        ctx.shadowBlur = 14 + extraGlow;
+        ctx.strokeStyle = '#1a0033';
+        ctx.lineWidth = Math.max(3, actualFontSize * 0.14);
+        ctx.strokeText(text, 0, 0);
+
+        ctx.fillStyle = synthGrad;
+        ctx.fillText(text, 0, 0);
+
+      // 5. RGB HOLOGRAM GLITCH
+      } else if (styleType === 'rgb_glitch') {
+        const offset = 3 + totalPower * 5;
+        ctx.fillStyle = 'rgba(255, 0, 85, 0.85)';
+        ctx.fillText(text, -offset, 0);
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
+        ctx.fillText(text, offset, 0);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(text, 0, 0);
+
+      // 6. MINIMALIST GLASS BADGE
+      } else if (styleType === 'glass_minimal') {
+        const metrics = ctx.measureText(text);
+        const padX = actualFontSize * 0.6;
+        const padY = actualFontSize * 0.45;
+        const bgW = metrics.width + padX * 2;
+        const bgH = actualFontSize + padY * 2;
+
+        ctx.fillStyle = 'rgba(10, 15, 26, 0.72)';
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(-bgW / 2, -bgH / 2, bgW, bgH, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 4 + extraGlow;
+        ctx.fillText(text, 0, 0);
+
+      // 7. STREETWEAR BOLD STROKE
+      } else if (styleType === 'street_bold') {
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = Math.max(4, actualFontSize * 0.16);
+        ctx.strokeText(text, 0, 0);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(text, 0, 0);
+      }
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 🎬 MAIN RENDER ENGINE
+    // =========================================================================
+    function renderFrame() {
+      if (analyser && dataArray) analyser.getByteFrequencyData(dataArray);
+      else dataArray = new Uint8Array(256).fill(25);
+
+      const baseRadius = parseFloat(centerSizeSlider.value);
+      const userBarHeight = parseFloat(barHeightSlider.value);
+      const userBarThickness = parseFloat(barWidthSlider.value);
+      const sens = parseFloat(sensitivitySlider.value);
+
+      const pSpeedMult = parseFloat(particleSpeedSlider.value);
+      const pMotion = particleMotionSelect.value;
+      const pShape = particleShapeSelect.value;
+
+      const pyroMode = pyroEffectSelect.value;
+      const pyroSpeed = parseFloat(pyroSpeedSlider.value);
+      const pyroFreq = parseFloat(pyroFreqSlider.value);
+      const style = styleSelect.value;
+
+      // Instrument Bins
+      let kickSum = 0; for (let i = 0; i < 4; i++) kickSum += dataArray[i];
+      const kickAvg = kickSum / 4;
+      const kickRise = kickAvg - lastKick;
+      lastKick = kickAvg;
+      if (kickRise > 8 && kickAvg > 80) kickImpulse = Math.min(1.8, (kickRise / 22) * (kickAvg / 150));
+      else { kickImpulse *= 0.82; if (kickImpulse < 0.01) kickImpulse = 0; }
+
+      let bassGtrSum = 0; for (let i = 4; i <= 8; i++) bassGtrSum += dataArray[i];
+      const bassGtrAvg = bassGtrSum / 5;
+      const bassGtrRise = bassGtrAvg - lastBassGtr;
+      lastBassGtr = bassGtrAvg;
+      if (bassGtrRise > 7 && bassGtrAvg > 70) bassGtrImpulse = Math.min(1.3, (bassGtrRise / 20));
+      else { bassGtrImpulse *= 0.84; if (bassGtrImpulse < 0.01) bassGtrImpulse = 0; }
+
+      let guitarSum = 0; for (let i = 8; i <= 22; i++) guitarSum += dataArray[i];
+      const guitarAvg = guitarSum / 15;
+      const guitarRise = guitarAvg - lastGuitar;
+      lastGuitar = guitarAvg;
+      if (guitarRise > 6 && guitarAvg > 65) guitarImpulse = Math.min(1.4, (guitarRise / 18));
+      else { guitarImpulse *= 0.88; if (guitarImpulse < 0.01) guitarImpulse = 0; }
+
+      let snareSum = 0; for (let i = 14; i <= 30; i++) snareSum += dataArray[i];
+      const snareAvg = snareSum / 17;
+      const snareRise = snareAvg - lastSnare;
+      lastSnare = snareAvg;
+      if (snareRise > 8 && snareAvg > 75) snareImpulse = Math.min(1.2, (snareRise / 20));
+      else { snareImpulse *= 0.78; if (snareImpulse < 0.01) snareImpulse = 0; }
+
+      let cymbalSum = 0; for (let i = 35; i <= 110; i++) cymbalSum += dataArray[i];
+      const cymbalAvg = cymbalSum / 76;
+      const cymbalRise = cymbalAvg - lastCymbals;
+      lastCymbals = cymbalAvg;
+      if (cymbalRise > 6 && cymbalAvg > 50) cymbalImpulse = Math.min(1.0, (cymbalRise / 16));
+      else { cymbalImpulse *= 0.75; if (cymbalImpulse < 0.01) cymbalImpulse = 0; }
+
+      const instLevels = {
+        bass: ((kickAvg / 255) * 0.7 + kickImpulse * 0.6) * sens,
+        bassGtr: ((bassGtrAvg / 255) * 0.6 + bassGtrImpulse * 0.5) * sens,
+        guitar: ((guitarAvg / 255) * 0.7 + guitarImpulse * 0.6) * sens,
+        snare: ((snareAvg / 255) * 0.6 + snareImpulse * 0.5) * sens,
+        cymbals: ((cymbalAvg / 255) * 0.5 + cymbalImpulse * 0.4) * sens
+      };
+
+      const totalInstrumentPower = (
+        instLevels.bass * 0.35 +
+        instLevels.bassGtr * 0.20 +
+        instLevels.guitar * 0.30 +
+        instLevels.snare * 0.22 +
+        instLevels.cymbals * 0.15
+      );
+
+      let beatImpact = totalInstrumentPower;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      ctx.save();
+      ctx.fillStyle = '#07090e';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Camera Beat Reactions
+      let zoom = 1, shakeX = 0, shakeY = 0, tilt = 0, flash = 0;
+      const effect = beatEffectSelect.value;
+      const nowTime = Date.now();
+
+      if (effect === 'vhs_glitch') {
+        zoom = 1 + (beatImpact * 0.05);
+        if (beatImpact > 0.1) {
+          shakeX = (Math.random() - 0.5) * 16 * beatImpact;
+          shakeY = (Math.sin(nowTime * 0.04) * 5) * beatImpact;
+        }
+      } else if (effect === 'crt_tv') {
+        zoom = 1 + (Math.sin(nowTime * 0.02) * 0.015) + (beatImpact * 0.08);
+        tilt = (Math.sin(nowTime * 0.01) * 0.01) * beatImpact;
+      } else if (effect === 'vinyl_wobble') {
+        zoom = 1 + (beatImpact * 0.06);
+        tilt = Math.sin(nowTime * 0.005) * 0.035 + (Math.cos(nowTime * 0.015) * 0.02 * beatImpact);
+      } else if (effect === 'retro_strobe') {
+        zoom = 1 + (beatImpact * 0.12);
+        if (beatImpact > 0.18) flash = beatImpact * 0.45;
+      } else if (effect === 'heartbeat_warm') {
+        const hbPhase = (nowTime * 0.007) % (Math.PI * 2);
+        const doublePulse = Math.pow(Math.sin(hbPhase), 10) * 0.08 + Math.pow(Math.sin(hbPhase + 0.5), 14) * 0.05;
+        zoom = 1 + (doublePulse * sens) + (beatImpact * 0.08);
+      } else if (effect === 'zoom' || effect === 'combo') {
+        zoom = 1 + (beatImpact * 0.10);
+      }
+      
+      if (effect === 'shake' || effect === 'combo') {
+        if (beatImpact > 0.12) {
+          shakeX = (Math.random() - 0.5) * 22 * beatImpact;
+          shakeY = (Math.random() - 0.5) * 22 * beatImpact;
+        }
+      }
+      if (effect === 'tilt' || effect === 'combo') tilt = Math.sin(nowTime * 0.012) * 0.04 * beatImpact;
+      if (effect === 'flash' || effect === 'combo') flash = beatImpact * 0.30;
+
+      ctx.translate(centerX + shakeX, centerY + shakeY);
+      ctx.scale(zoom, zoom);
+      ctx.rotate(tilt);
+      ctx.translate(-centerX, -centerY);
+
+      if (bgImg) {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Particles & Pyro
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, canvas.width, canvas.height);
+      ctx.clip();
+
+      if (pMotion !== 'none') {
+        const time = nowTime * 0.002;
+        if (pMotion === 'synapse') {
+          particles.forEach((p, idx) => {
+            p.x += p.vx * pSpeedMult * (1 + beatImpact * 0.8);
+            p.y += p.vy * pSpeedMult * (1 + beatImpact * 0.8);
+            if (p.x < -canvas.width * 0.46 || p.x > canvas.width * 0.46) p.vx *= -1;
+            if (p.y < -canvas.height * 0.46 || p.y > canvas.height * 0.46) p.vy *= -1;
+            const px = centerX + p.x, py = centerY + p.y;
+            for (let j = idx + 1; j < particles.length; j++) {
+              const p2 = particles[j];
+              const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+              if (dist < 75) {
+                ctx.strokeStyle = `rgba(0, 240, 255, ${(1 - dist / 75) * (0.35 + beatImpact * 0.6)})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(centerX + p2.x, centerY + p2.y);
+                ctx.stroke();
+              }
+            }
+            renderShape(px, py, p.baseSize * (1 + beatImpact * 0.5), p.alpha, pShape, p.noteChar);
+          });
+        } else if (pMotion === 'celestial') {
+          particles.forEach(p => {
+            p.angle += (p.orbitSpeed + beatImpact * 0.006) * pSpeedMult;
+            const rx = p.dist + Math.sin(time + p.angle) * 15;
+            const ry = rx * p.orbitTilt;
+            const orbitRot = Math.PI * 0.25;
+            const unRotX = Math.cos(p.angle) * rx;
+            const unRotY = Math.sin(p.angle) * ry;
+            const px = centerX + (unRotX * Math.cos(orbitRot) - unRotY * Math.sin(orbitRot));
+            const py = centerY + (unRotX * Math.sin(orbitRot) + unRotY * Math.cos(orbitRot));
+            renderShape(px, py, p.baseSize, p.alpha * (0.5 + beatImpact * 0.5), pShape, p.noteChar);
+          });
+        } else if (pMotion === 'deepsea') {
+          particles.forEach(p => {
+            p.angle += (p.orbitSpeed * 0.5) * pSpeedMult;
+            p.dist += Math.sin(time * 2 + p.angle) * 0.5 * pSpeedMult;
+            const px = centerX + Math.cos(p.angle) * (p.dist + beatImpact * 20);
+            const py = centerY + Math.sin(p.angle) * (p.dist + beatImpact * 20);
+            ctx.strokeStyle = `rgba(0, 240, 255, ${p.alpha * 0.5})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px - Math.cos(p.angle) * 16 + Math.sin(time * 3 + p.angle) * 6, py - Math.sin(p.angle) * 16 + Math.cos(time * 3 + p.angle) * 6);
+            ctx.stroke();
+            renderShape(px, py, p.baseSize * (1 + beatImpact * 0.4), p.alpha, pShape, p.noteChar);
+          });
+        } else {
+          particles.forEach(p => {
+            let px = 0, py = 0, psize = p.baseSize;
+            if (pMotion === 'burst') {
+              p.dist += (p.speed * 0.9 + beatImpact * 1.5) * pSpeedMult;
+              if (p.dist > canvas.width * 0.68) { p.dist = baseRadius; p.angle = Math.random() * Math.PI * 2; }
+              px = centerX + Math.cos(p.angle) * p.dist;
+              py = centerY + Math.sin(p.angle) * p.dist;
+            } else if (pMotion === 'warp') {
+              p.z -= (p.speed * 1.5 + beatImpact * 4.0) * pSpeedMult;
+              if (p.z <= 10) { p.z = canvas.width; p.x = (Math.random() - 0.5) * canvas.width * 0.8; p.y = (Math.random() - 0.5) * canvas.height * 0.8; }
+              px = centerX + (p.x / p.z) * canvas.width;
+              py = centerY + (p.y / p.z) * canvas.width;
+              psize = (1 - p.z / canvas.width) * 4.5;
+            } else if (pMotion === 'rain') {
+              p.y += (p.speed * 0.9 + beatImpact * 1.2) * pSpeedMult;
+              p.x += Math.sin(p.y * 0.02) * 0.4;
+              if (p.y > canvas.height) { p.y = 0; p.x = Math.random() * canvas.width; }
+              px = p.x; py = p.y;
+            } else if (pMotion === 'embers') {
+              p.y -= (p.speed * 0.9 + beatImpact * 1.2) * pSpeedMult;
+              p.x += Math.sin(p.y * 0.02) * 0.4;
+              if (p.y < 0) { p.y = canvas.height; p.x = Math.random() * canvas.width; }
+              px = p.x; py = p.y;
+            }
+            renderShape(px, py, psize, p.alpha, pShape, p.noteChar);
+          });
+        }
+      }
+
+      // Pyro Engine
+      if (pyroMode !== 'none') {
+        pyroCooldown--;
+        if (totalInstrumentPower > 0.24 && pyroCooldown <= 0) {
+          if (pyroMode === 'random_logo' || pyroMode === 'combo_all') spawnRandomLogoFireballs(centerX, centerY, baseRadius, Math.floor(Math.random() * 2 + 1));
+          if (pyroMode === 'firework_fountain' || pyroMode === 'combo_all') spawnFireworkFountain(Math.floor(Math.random() * 2 + 1));
+          if (pyroMode === 'diag_fire') spawnDiagonalFireballs(centerX, centerY, baseRadius);
+          pyroCooldown = Math.max(10, Math.floor(28 / pyroFreq));
+        }
+
+        for (let i = pyros.length - 1; i >= 0; i--) {
+          const p = pyros[i];
+          if (p.type === 'logo_fireball') {
+            p.angle += p.wobbleRate;
+            p.dist += (p.baseSpeed + Math.pow(totalInstrumentPower, 1.8) * 7.5) * pyroSpeed;
+            p.x = centerX + Math.cos(p.angle) * p.dist;
+            p.y = centerY + Math.sin(p.angle) * p.dist;
+            const maxDist = canvas.width * 0.70;
+            const progress = (p.dist - p.baseDist) / (maxDist - p.baseDist);
+            p.alpha = progress < 0.15 ? progress * 6.5 : (progress > 0.65 ? (1 - progress) * 2.8 : 1);
+            p.alpha = Math.max(0, Math.min(1, p.alpha));
+
+            p.trail.push({ x: p.x, y: p.y, size: Math.max(1, p.size * (1 - progress * 0.6)), alpha: p.alpha, decay: 0.08 });
+            if (p.trail.length > 8) p.trail.shift();
+
+            for (let t = p.trail.length - 1; t >= 0; t--) {
+              const tr = p.trail[t];
+              tr.alpha -= tr.decay;
+              if (tr.alpha <= 0) {
+                p.trail.splice(t, 1);
+              } else {
+                ctx.fillStyle = `rgba(255, ${Math.floor(100 + tr.alpha * 120)}, 0, ${tr.alpha * 0.7})`;
+                ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.size, 0, Math.PI * 2); ctx.fill();
+              }
+            }
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            const curRadius = Math.max(2, p.size * (1 - progress * 0.5) * (1 + totalInstrumentPower * 0.35));
+            const fGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, curRadius * 2.2);
+            fGrad.addColorStop(0, '#ffffff'); fGrad.addColorStop(0.25, '#fff176'); fGrad.addColorStop(0.55, '#ff8f00'); fGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = fGrad;
+            ctx.beginPath(); ctx.arc(p.x, p.y, curRadius * 2.2, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+            if (p.dist >= maxDist || p.alpha <= 0.02) pyros.splice(i, 1);
+          } else if (p.type === 'firework') {
+            p.x += (p.vx + p.drift) * pyroSpeed;
+            p.y += p.vy * pyroSpeed;
+            p.vy += p.gravity * pyroSpeed;
+            p.trail.push({ x: p.x, y: p.y, size: Math.random() * 2 + 1.5, alpha: p.alpha, decay: 0.07 });
+            if (p.trail.length > 8) p.trail.shift();
+
+            for (let t = p.trail.length - 1; t >= 0; t--) {
+              const tr = p.trail[t];
+              tr.alpha -= tr.decay;
+              if (tr.alpha <= 0) {
+                p.trail.splice(t, 1);
+              } else {
+                ctx.fillStyle = `rgba(255, ${Math.floor(180 + tr.alpha * 75)}, 60, ${tr.alpha * 0.8})`;
+                ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.size, 0, Math.PI * 2); ctx.fill();
+              }
+            }
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            const fGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+            fGrad.addColorStop(0, '#ffffff'); fGrad.addColorStop(0.3, '#ffe082'); fGrad.addColorStop(0.7, '#ff5722'); fGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = fGrad;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+            if (p.vy >= 0 && !p.hasPopped) {
+              p.hasPopped = true;
+              for (let s = 0; s < 6; s++) p.trail.push({ x: p.x + (Math.random() - 0.5) * 15, y: p.y + (Math.random() - 0.5) * 15, size: 2, alpha: 1, decay: 0.08 });
+            }
+            if (p.y < -80 || (p.hasPopped && p.trail.length === 0)) pyros.splice(i, 1);
+          }
+        }
+      }
+      ctx.restore();
+
+      // =========================================================================
+      // 4. SPECTRUM STYLES RENDERING
+      // =========================================================================
+      const safeShadow = isRecording ? 6 : 14;
+
+      if (style.startsWith('lava_')) {
+        drawElementalLavaUmbok(centerX, centerY, baseRadius, style, totalInstrumentPower, guitarImpulse, userBarHeight, userBarThickness, instLevels);
+
+      // 📻 VU METERS
+      } else if (style === 'vu_meter') {
+        const targetL = Math.min(1.0, (instLevels.bass * 0.6 + instLevels.guitar * 0.4));
+        const targetR = Math.min(1.0, (instLevels.snare * 0.5 + instLevels.cymbals * 0.5 + instLevels.bassGtr * 0.3));
+        vuLeftNeedle += (targetL - vuLeftNeedle) * 0.32;
+        vuRightNeedle += (targetR - vuRightNeedle) * 0.32;
+
+        const meterW = 160, meterH = 95;
+        const leftX = centerX - meterW - 15, rightX = centerX + 15, meterY = centerY + baseRadius + 30;
+
+        function drawSingleVUMeter(x, y, value, label) {
+          ctx.save();
+          ctx.fillStyle = '#f5eed7'; ctx.strokeStyle = '#2c251e'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.roundRect(x, y, meterW, meterH, 8); ctx.fill(); ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(x + meterW / 2, y + meterH + 10, meterW * 0.65, Math.PI * 1.25, Math.PI * 1.75);
+          ctx.strokeStyle = '#1b1b1b'; ctx.lineWidth = 2; ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(x + meterW / 2, y + meterH + 10, meterW * 0.65, Math.PI * 1.62, Math.PI * 1.75);
+          ctx.strokeStyle = '#d92626'; ctx.lineWidth = 4; ctx.stroke();
+
+          for (let m = 0; m <= 6; m++) {
+            const mAngle = Math.PI * 1.25 + (m / 6) * (Math.PI * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(x + meterW / 2 + Math.cos(mAngle) * (meterW * 0.62), y + meterH + 10 + Math.sin(mAngle) * (meterW * 0.62));
+            ctx.lineTo(x + meterW / 2 + Math.cos(mAngle) * (meterW * 0.67), y + meterH + 10 + Math.sin(mAngle) * (meterW * 0.67));
+            ctx.strokeStyle = m >= 5 ? '#d92626' : '#222';
+            ctx.lineWidth = 1.5; ctx.stroke();
+          }
+
+          const needleAngle = Math.PI * 1.25 + value * (Math.PI * 0.5);
+          ctx.beginPath();
+          ctx.moveTo(x + meterW / 2, y + meterH + 10);
+          ctx.lineTo(x + meterW / 2 + Math.cos(needleAngle) * (meterW * 0.72), y + meterH + 10 + Math.sin(needleAngle) * (meterW * 0.72));
+          ctx.strokeStyle = '#111'; ctx.lineWidth = 2.2; ctx.stroke();
+
+          ctx.fillStyle = '#111';
+          ctx.beginPath(); ctx.arc(x + meterW / 2, y + meterH + 10, 8, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#333'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+          ctx.fillText(`VU ${label}`, x + meterW / 2, y + meterH - 8);
+          ctx.restore();
+        }
+
+        drawSingleVUMeter(leftX, meterY, vuLeftNeedle, 'CH-L');
+        drawSingleVUMeter(rightX, meterY, vuRightNeedle, 'CH-R');
+        drawLogo(centerX, centerY, baseRadius);
+
+      // 📻 RETRO LED BLOCKS
+      } else if (style === 'retro_led') {
+        const barCols = 32;
+        const barW = (canvas.width * 0.88) / barCols;
+        const startX = (canvas.width - (barCols * barW)) / 2;
+        const maxBlocks = 18;
+        const blockH = Math.max(3, (userBarHeight * 1.1) / maxBlocks);
+
+        for (let i = 0; i < barCols; i++) {
+          const val = (dataArray[i * 2] / 255) * (1 + totalInstrumentPower * 0.45);
+          const activeBlocks = Math.min(maxBlocks, Math.floor(val * maxBlocks));
+          if (activeBlocks >= ledPeaks[i]) ledPeaks[i] = activeBlocks;
+          else ledPeaks[i] = Math.max(0, ledPeaks[i] - 0.22);
+
+          const bx = startX + i * barW;
+          for (let b = 0; b < maxBlocks; b++) {
+            const by = canvas.height - 35 - (b * (blockH + 2));
+            if (b < activeBlocks) {
+              if (b >= maxBlocks - 4) ctx.fillStyle = '#ff2222';
+              else if (b >= maxBlocks - 8) ctx.fillStyle = '#ffbb00';
+              else ctx.fillStyle = '#00ff66';
+            } else {
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            }
+            ctx.fillRect(bx + 1.5, by, barW - 3, blockH);
+          }
+
+          if (ledPeaks[i] > 0) {
+            const peakY = canvas.height - 35 - (Math.floor(ledPeaks[i]) * (blockH + 2));
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(bx + 1.5, peakY, barW - 3, blockH * 0.8);
+          }
+        }
+        drawLogo(centerX, centerY - 60, baseRadius);
+
+      // 📻 WINAMP OSCILLOSCOPE
+      } else if (style === 'crt_oscilloscope') {
+        const points = 160;
+        const waveStep = canvas.width / points;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 255, 100, 0.08)'; ctx.lineWidth = 1;
+        for (let g = 0; g < canvas.width; g += 40) {
+          ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, canvas.height); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(canvas.width, g); ctx.stroke();
+        }
+        ctx.beginPath();
+        for (let i = 0; i < points; i++) {
+          const sample = (dataArray[i % 55] - 128) / 128;
+          const wy = centerY + (sample * userBarHeight * (1 + totalInstrumentPower * 0.8));
+          if (i === 0) ctx.moveTo(i * waveStep, wy);
+          else ctx.lineTo(i * waveStep, wy);
+        }
+        ctx.strokeStyle = '#22ff66'; ctx.lineWidth = userBarThickness * 1.2;
+        ctx.shadowColor = '#00ff66'; ctx.shadowBlur = safeShadow; ctx.stroke();
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, userBarThickness * 0.4);
+        ctx.stroke();
+        ctx.restore();
+        drawLogo(centerX, centerY, baseRadius);
+
+      // 📻 SYNTHWAVE GRID
+      } else if (style === 'synthwave_grid') {
+        const horizonY = centerY + 30;
+        ctx.save();
+        const sunGrad = ctx.createLinearGradient(centerX, horizonY - 140, centerX, horizonY);
+        sunGrad.addColorStop(0, '#ffff00'); sunGrad.addColorStop(0.5, '#ff0077'); sunGrad.addColorStop(1, '#1b0033');
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath(); ctx.arc(centerX, horizonY, 120, Math.PI, 0); ctx.fill();
+        for (let s = 1; s <= 5; s++) {
+          ctx.fillStyle = '#07090e';
+          ctx.fillRect(centerX - 120, horizonY - (s * 15), 240, 2 + s);
+        }
+        const gridSpeed = (nowTime * 0.0018) % 1;
+        for (let h = 0; h < 14; h++) {
+          const norm = (h + gridSpeed) / 14;
+          const gy = horizonY + Math.pow(norm, 2.5) * (canvas.height - horizonY);
+          const gridAmp = Math.sin(norm * Math.PI) * (totalInstrumentPower * 15);
+          ctx.beginPath(); ctx.moveTo(0, gy + gridAmp); ctx.lineTo(canvas.width, gy + gridAmp);
+          ctx.strokeStyle = `rgba(255, 0, 140, ${Math.min(1, norm * 1.5)})`; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        for (let v = -10; v <= 10; v++) {
+          ctx.beginPath(); ctx.moveTo(centerX, horizonY); ctx.lineTo(centerX + (v * 75) * 2, canvas.height);
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+        }
+        ctx.restore();
+        drawLogo(centerX, centerY - 45, baseRadius);
+
+      // 📻 70s VINYL GROOVE
+      } else if (style === 'vinyl_groove') {
+        const vinylR = baseRadius + userBarHeight * 0.9;
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate((nowTime * 0.0015) % (Math.PI * 2));
+        const vGrad = ctx.createRadialGradient(0, 0, baseRadius, 0, 0, vinylR);
+        vGrad.addColorStop(0, '#111'); vGrad.addColorStop(0.3, '#1e1e1e'); vGrad.addColorStop(0.7, '#0d0d0d'); vGrad.addColorStop(1, '#1a1a1a');
+        ctx.fillStyle = vGrad;
+        ctx.beginPath(); ctx.arc(0, 0, vinylR, 0, Math.PI * 2); ctx.fill();
+        for (let r = baseRadius + 10; r < vinylR - 5; r += 5) {
+          ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'; ctx.lineWidth = 1; ctx.stroke();
+        }
+        const shine = ctx.createLinearGradient(-vinylR, -vinylR, vinylR, vinylR);
+        shine.addColorStop(0, 'rgba(255, 255, 255, 0.08)'); shine.addColorStop(0.5, 'rgba(255, 255, 255, 0)'); shine.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
+        ctx.fillStyle = shine;
+        ctx.beginPath(); ctx.arc(0, 0, vinylR, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, vinylR + (totalInstrumentPower * 14), 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff9900'; ctx.lineWidth = userBarThickness; ctx.shadowColor = '#ff6600'; ctx.shadowBlur = safeShadow; ctx.stroke();
+        ctx.restore();
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC NCS
+      } else if (style === 'ncs') {
+        const bars = 84;
+        const angleStep = (Math.PI * 2) / bars;
+        ctx.lineWidth = userBarThickness; ctx.lineCap = 'round';
+        for (let i = 0; i < bars; i++) {
+          const val = dataArray[i % 55];
+          const barHeight = ((val / 255) * userBarHeight * 0.3) + (userBarHeight * 0.7 * totalInstrumentPower * (val / 255));
+          const angle = i * angleStep;
+          ctx.strokeStyle = getColor(i, bars);
+          ctx.beginPath();
+          ctx.moveTo(centerX + Math.cos(angle) * baseRadius, centerY + Math.sin(angle) * baseRadius);
+          ctx.lineTo(centerX + Math.cos(angle) * (baseRadius + barHeight), centerY + Math.sin(angle) * (baseRadius + barHeight));
+          ctx.stroke();
+        }
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC TRAP
+      } else if (style === 'trap') {
+        const bars = 76;
+        const angleStep = (Math.PI * 2) / bars;
+        ctx.lineWidth = userBarThickness;
+        for (let i = 0; i < bars; i++) {
+          const val = dataArray[i % 45];
+          const barHeight = ((val / 255) * userBarHeight * 0.3) + (userBarHeight * 0.7 * totalInstrumentPower * (val / 255));
+          const angle = i * angleStep;
+          ctx.strokeStyle = getColor(i, bars);
+          ctx.beginPath();
+          ctx.moveTo(centerX + Math.cos(angle) * Math.max(10, baseRadius - (val / 255) * 16), centerY + Math.sin(angle) * Math.max(10, baseRadius - (val / 255) * 16));
+          ctx.lineTo(centerX + Math.cos(angle) * (baseRadius + barHeight), centerY + Math.sin(angle) * (baseRadius + barHeight));
+          ctx.stroke();
+        }
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC WAVE
+      } else if (style === 'wave') {
+        const points = 70;
+        const angleStep = (Math.PI * 2) / points;
+        ctx.beginPath();
+        for (let i = 0; i <= points; i++) {
+          const val = dataArray[i % 45];
+          const r = baseRadius + ((val / 255) * userBarHeight * 0.15) + (userBarHeight * 0.85 * totalInstrumentPower * (val / 255));
+          const angle = i * angleStep;
+          const x = centerX + Math.cos(angle) * r;
+          const y = centerY + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = getColor(15, 30);
+        ctx.lineWidth = userBarThickness * 1.5;
+        ctx.shadowBlur = safeShadow; ctx.shadowColor = ctx.strokeStyle; ctx.stroke(); ctx.shadowBlur = 0;
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC LINEAR BARS
+      } else if (style === 'linear') {
+        const barCount = 60;
+        const barWidth = (canvas.width / barCount) - (userBarThickness > 5 ? 3 : 2);
+        for (let i = 0; i < barCount; i++) {
+          const barHeight = ((dataArray[i] / 255) * (userBarHeight * 1.2)) + (userBarHeight * 1.5 * totalInstrumentPower * (dataArray[i] / 255));
+          const x = i * (canvas.width / barCount);
+          const y = canvas.height - barHeight;
+          ctx.fillStyle = getColor(i, barCount);
+          ctx.fillRect(x, y, barWidth, barHeight);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          ctx.fillRect(x, canvas.height, barWidth, barHeight * 0.25);
+        }
+        if (centerImg) drawLogo(centerX, centerY - 60, baseRadius);
+
+      // CLASSIC DOTS RADIAL
+      } else if (style === 'dots_radial') {
+        const dotCount = 64;
+        const angleStep = (Math.PI * 2) / dotCount;
+        for (let i = 0; i < dotCount; i++) {
+          const val = dataArray[i % 50];
+          const dist1 = baseRadius + 6 + ((val / 255) * userBarHeight * 0.25) + (userBarHeight * 0.75 * totalInstrumentPower);
+          const dist2 = baseRadius + 4 + ((val / 255) * userBarHeight * 0.15) + (userBarHeight * 0.35 * totalInstrumentPower);
+          const angle = i * angleStep;
+          ctx.fillStyle = getColor(i, dotCount);
+          ctx.beginPath(); ctx.arc(centerX + Math.cos(angle) * dist1, centerY + Math.sin(angle) * dist1, Math.max(1.8, userBarThickness * 1.2), 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(centerX + Math.cos(angle) * dist2, centerY + Math.sin(angle) * dist2, Math.max(1, userBarThickness * 0.6), 0, Math.PI * 2); ctx.fill();
+        }
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC DOUBLE RING
+      } else if (style === 'double_ring') {
+        const points = 65;
+        const angleStep = (Math.PI * 2) / points;
+        ctx.beginPath();
+        for (let i = 0; i <= points; i++) {
+          const val = dataArray[i % 45];
+          const r = baseRadius + 8 + ((val / 255) * userBarHeight * 0.2) + (userBarHeight * 0.8 * totalInstrumentPower * (val / 255));
+          const angle = i * angleStep;
+          if (i === 0) ctx.moveTo(centerX + Math.cos(angle) * r, centerY + Math.sin(angle) * r);
+          else ctx.lineTo(centerX + Math.cos(angle) * r, centerY + Math.sin(angle) * r);
+        }
+        ctx.closePath(); ctx.strokeStyle = getColor(10, 30); ctx.lineWidth = userBarThickness; ctx.stroke();
+
+        ctx.beginPath();
+        for (let i = 0; i <= points; i++) {
+          const val = dataArray[i % 45];
+          const r = Math.max(10, baseRadius - 8 - ((val / 255) * 12));
+          const angle = i * angleStep;
+          if (i === 0) ctx.moveTo(centerX + Math.cos(angle) * r, centerY + Math.sin(angle) * r);
+          else ctx.lineTo(centerX + Math.cos(angle) * r, centerY + Math.sin(angle) * r);
+        }
+        ctx.closePath(); ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1.5, userBarThickness * 0.7); ctx.stroke();
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC HEXAGON
+      } else if (style === 'hexagon') {
+        const sides = 6, barsPerSide = 12, totalBars = sides * barsPerSide;
+        for (let s = 0; s < sides; s++) {
+          const a1 = (s * Math.PI * 2) / sides, a2 = ((s + 1) * Math.PI * 2) / sides;
+          const p1x = centerX + Math.cos(a1) * baseRadius, p1y = centerY + Math.sin(a1) * baseRadius;
+          const p2x = centerX + Math.cos(a2) * baseRadius, p2y = centerY + Math.sin(a2) * baseRadius;
+          for (let b = 0; b < barsPerSide; b++) {
+            const t = b / barsPerSide;
+            const bx = p1x + (p2x - p1x) * t, by = p1y + (p2y - p1y) * t;
+            const val = dataArray[(s * barsPerSide + b) % 50];
+            const h = ((val / 255) * userBarHeight * 0.3) + (userBarHeight * 0.7 * totalInstrumentPower * (val / 255));
+            const normalAngle = a1 + (Math.PI / sides);
+            ctx.strokeStyle = getColor(s * barsPerSide + b, totalBars);
+            ctx.lineWidth = userBarThickness;
+            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(normalAngle) * h, by + Math.sin(normalAngle) * h); ctx.stroke();
+          }
+        }
+        drawLogo(centerX, centerY, baseRadius);
+
+      // CLASSIC SUNBURST
+      } else if (style === 'sunburst') {
+        const rays = 50, angleStep = (Math.PI * 2) / rays;
+        ctx.beginPath();
+        for (let i = 0; i < rays; i++) {
+          const val = dataArray[i % 45];
+          const peakR = baseRadius + ((val / 255) * userBarHeight * 0.3) + (userBarHeight * 0.8 * totalInstrumentPower * (val / 255));
+          const aStart = i * angleStep, aMid = aStart + angleStep * 0.5, aEnd = (i + 1) * angleStep;
+          if (i === 0) ctx.moveTo(centerX + Math.cos(aStart) * baseRadius, centerY + Math.sin(aStart) * baseRadius);
+          ctx.lineTo(centerX + Math.cos(aMid) * peakR, centerY + Math.sin(aMid) * peakR);
+          ctx.lineTo(centerX + Math.cos(aEnd) * baseRadius, centerY + Math.sin(aEnd) * baseRadius);
+        }
+        ctx.closePath(); ctx.strokeStyle = getColor(20, 40); ctx.lineWidth = userBarThickness; ctx.stroke();
+        drawLogo(centerX, centerY, baseRadius);
+      }
+
+      // 5. I-DRAW ANG CAPTION / TEXT (MAY DESIGN AT BEAT)
+      drawCaption(centerX, totalInstrumentPower);
+
+      // POST-EFFECTS
+      if (effect === 'vhs_glitch' && beatImpact > 0.08) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+        for (let vl = 0; vl < canvas.height; vl += 8) ctx.fillRect(0, vl, canvas.width, 2);
+      } else if (effect === 'crt_tv') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+        for (let cl = 0; cl < canvas.height; cl += 4) ctx.fillRect(0, cl, canvas.width, 1.5);
+      }
+
+      if (flash > 0.05) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(flash, 0.65)})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.restore();
+    }
+
+    function renderShape(px, py, psize, palpha, pShape, pChar) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${palpha})`;
+      if (pShape === 'dots') {
+        ctx.beginPath(); ctx.arc(px, py, Math.max(0.8, psize), 0, Math.PI * 2); ctx.fill();
+      } else if (pShape === 'stars') {
+        ctx.font = `${Math.max(8, Math.floor(psize * 4))}px sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText('✦', px, py);
+      } else if (pShape === 'notes') {
+        ctx.font = `bold ${Math.max(9, Math.floor(psize * 4.5))}px sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(pChar, px, py);
+      } else if (pShape === 'diamonds') {
+        ctx.font = `${Math.max(8, Math.floor(psize * 4))}px sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText('◆', px, py);
+      }
+    }
+
+    function drawLogo(x, y, radius) {
+      if (radius <= 4) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(2, radius - 4), 0, Math.PI * 2);
+      ctx.clip();
+      if (centerImg) {
+        const size = Math.max(4, (radius - 4) * 2);
+        ctx.drawImage(centerImg, x - size / 2, y - size / 2, size, size);
+      } else {
+        ctx.fillStyle = "#151a26"; ctx.fill();
+        ctx.fillStyle = "#00f0ff"; ctx.font = `bold ${Math.max(6, Math.floor(radius * 0.26))}px sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("KALKAL", x, y);
+      }
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(x, y, Math.max(2, radius - 4), 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    // =========================================================================
+    // 🔧 DURATION PATCHER
+    // =========================================================================
+    async function fixVideoDuration(rawBlob, durationMs) {
+      if (typeof window.ysFixWebmDuration === 'function' && rawBlob.type.includes('webm')) {
+        try {
+          return await new Promise((resolve) => {
+            window.ysFixWebmDuration(rawBlob, durationMs, (fixedBlob) => {
+              resolve(fixedBlob);
+            });
+          });
+        } catch (e) {
+          console.warn("Hindi ma-patch ang duration:", e);
+        }
+      }
+      return rawBlob;
+    }
+
+    // Modal
+    function openSaveModal(blob, baseName, durationSeconds) {
+      currentExportBlob = blob;
+      currentExportFileName = `${baseName}.${fileExt}`;
+      
+      const videoURL = URL.createObjectURL(blob);
+      finishedVideoPreview.src = videoURL;
+      
+      const mins = Math.floor(durationSeconds / 60);
+      const secs = Math.floor(durationSeconds % 60);
+      const durationFormatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      videoDurationBadge.innerText = `⏱️ Haba ng Video: ${durationFormatted} (YouTube Ready ✅)`;
+
+      saveSuccessModal.classList.add('active');
+    }
+
+    closeSaveModalBtn.addEventListener('click', () => {
+      saveSuccessModal.classList.remove('active');
+      finishedVideoPreview.pause();
+    });
+
+    // ⬇️ 1. DIREKTONG DOWNLOAD
+    saveDirectDownloadBtn.addEventListener('click', () => {
+      if (!currentExportBlob) return;
+      
+      const cleanMime = fileExt === 'mp4' ? 'video/mp4' : 'video/webm';
+      const downloadBlob = new Blob([currentExportBlob], { type: cleanMime });
+      const url = URL.createObjectURL(downloadBlob);
+      
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = currentExportFileName;
+      document.body.appendChild(a);
+      a.click();
+      
+      saveDirectDownloadBtn.innerText = "✅ Na-download Na!";
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        saveDirectDownloadBtn.innerText = "⬇️ I-download ang Video File (.mp4/.webm)";
+      }, 1500);
+    });
+
+    // 📲 2. SHARE SA GALLERY / PHOTOS
+    shareToGalleryBtn.addEventListener('click', async () => {
+      if (!currentExportBlob) return;
+      const cleanMime = fileExt === 'mp4' ? 'video/mp4' : 'video/webm';
+      const shareFile = new File([currentExportBlob], currentExportFileName, { type: cleanMime });
+
+      if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+        try {
+          await navigator.share({
+            files: [shareFile],
+            title: 'KALKAL Video'
+          });
+        } catch (e) {}
+      } else {
+        alert("Hindi suportado ang direct share. Gamitin ang asul na button na 'I-download ang Video File'.");
+      }
+    });
+
+    openPlayerBtn.addEventListener('click', () => {
+      if (!currentExportBlob) return;
+      window.open(URL.createObjectURL(currentExportBlob), '_blank');
+    });
+
+    // =========================================================================
+    // 🎬 FULL EXPORT (SMOOTH 2.5 Mbps)
+    // =========================================================================
+    fullExportBtn.addEventListener('click', () => {
+      if (!audio.src) { alert("Pumili muna ng kanta gamit ang '🎵 Audio'!"); return; }
+      if (isRecording) return;
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      audio.currentTime = 0;
+      audio.play();
+      playBtn.innerText = "⏸ Pause";
+      render();
+
+      const stream = canvas.captureStream(30);
+      const audioTrack = mediaStreamDest.stream.getAudioTracks()[0];
+      if (audioTrack) stream.addTrack(audioTrack);
+
+      recordedChunks = [];
+      const options = {
+        mimeType: preferredMime,
+        videoBitsPerSecond: 2500000
+      };
+
+      try {
+        mediaRecorder = new MediaRecorder(stream, options);
+      } catch (e) {
+        mediaRecorder = new MediaRecorder(stream);
+      }
+      
+      recordStartTime = Date.now();
+      exportStatusTitle.innerText = "Exporting Music Video...";
+
+      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+      
+      mediaRecorder.onstop = async () => {
+        exportStatusTitle.innerText = "Inaayos ang YouTube Duration Metadata...";
+        statusBadge.innerText = "PATCHING DURATION";
+
+        const rawBlob = new Blob(recordedChunks, { type: preferredMime || 'video/webm' });
+        
+        const elapsedSecs = Math.max(1, (Date.now() - recordStartTime) / 1000);
+        const videoDurationMs = Math.round(elapsedSecs * 1000);
+
+        const fixedBlob = await fixVideoDuration(rawBlob, videoDurationMs);
+
+        exportOverlay.classList.remove('active');
+        statusBadge.classList.remove('exporting');
+        statusBadge.innerText = "READY";
+        isRecording = false; 
+        isFullExporting = false;
+
+        openSaveModal(fixedBlob, `${uploadedSongName}-full`, elapsedSecs);
+      };
+
+      mediaRecorder.start(500);
+      isRecording = true; 
+      isFullExporting = true;
+      statusBadge.classList.add('exporting');
+      statusBadge.innerText = "EXPORTING FULL VIDEO";
+      exportOverlay.classList.add('active');
+    });
+
+    finishExportNowBtn.addEventListener('click', () => {
+      if (isFullExporting && mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        audio.pause();
+        playBtn.innerText = "▶ Play";
+      }
+    });
+
+    cancelExportBtn.addEventListener('click', () => {
+      if (isFullExporting && mediaRecorder) {
+        mediaRecorder.stop(); 
+        audio.pause();
+        playBtn.innerText = "▶ Play";
+        exportOverlay.classList.remove('active');
+        statusBadge.classList.remove('exporting');
+        statusBadge.innerText = "EXPORT CANCELLED";
+        isFullExporting = false; 
+        isRecording = false;
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      if (isFullExporting && mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        playBtn.innerText = "▶ Play";
+      }
+    });
+
+    // =========================================================================
+    // 🔴 CLIP RECORD
+    // =========================================================================
+    clipRecordBtn.addEventListener('click', () => {
+      if (!audio.src) { alert("Pumili muna ng kanta gamit ang '🎵 Audio'!"); return; }
+      initAudio();
+
+      if (!isRecording) {
+        if (audio.paused) { audio.play(); playBtn.innerText = "⏸ Pause"; }
+        render();
+
+        const stream = canvas.captureStream(30);
+        const audioTrack = mediaStreamDest.stream.getAudioTracks()[0];
+        if (audioTrack) stream.addTrack(audioTrack);
+
+        recordedChunks = [];
+        const options = {
+          mimeType: preferredMime,
+          videoBitsPerSecond: 2500000
+        };
+
+        try {
+          mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e) {
+          mediaRecorder = new MediaRecorder(stream);
+        }
+        
+        recordStartTime = Date.now();
+
+        mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+        
+        mediaRecorder.onstop = async () => {
+          statusBadge.innerText = "PATCHING DURATION";
+          const rawBlob = new Blob(recordedChunks, { type: preferredMime || 'video/webm' });
+          
+          const elapsedSecs = Math.max(1, (Date.now() - recordStartTime) / 1000);
+          const clipDurationMs = Math.round(elapsedSecs * 1000);
+
+          const fixedBlob = await fixVideoDuration(rawBlob, clipDurationMs);
+
+          clipRecordBtn.innerText = "🔴 Clip";
+          clipRecordBtn.classList.remove('recording');
+          clearInterval(recordInterval);
+          isRecording = false;
+          statusBadge.innerText = "READY";
+          
+          openSaveModal(fixedBlob, `${uploadedSongName}-clip`, elapsedSecs);
+        };
+
+        mediaRecorder.start(500);
+        isRecording = true;
+        clipRecordBtn.classList.add('recording');
+        recordInterval = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
+          clipRecordBtn.innerText = `⏹ (${elapsed}s)`;
+          statusBadge.innerText = `RECORDING (${elapsed}s)`;
+        }, 1000);
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        audio.pause();
+        playBtn.innerText = "▶ Play";
+      }
+    });
+
+    window.addEventListener('load', () => renderFrame());
+  </script>
+</body>
+</html>
