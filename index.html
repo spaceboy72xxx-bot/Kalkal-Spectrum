@@ -353,7 +353,7 @@
     .preview-box {
       width: 100%;
       aspect-ratio: 1/1;
-      max-height: 210px;
+      max-height: 200px;
       background: #000;
       border-radius: 12px;
       overflow: hidden;
@@ -374,30 +374,35 @@
       font-family: monospace;
       font-weight: 700;
     }
-    .save-modal-desc { font-size: 11.5px; color: #cbd3e1; text-align: center; line-height: 1.4; }
     .save-modal-actions { display: flex; flex-direction: column; gap: 8px; }
     .save-act-btn {
-      padding: 12px 14px;
+      padding: 11px 14px;
       border-radius: 10px;
       border: none;
       font-weight: 800;
-      font-size: 13px;
+      font-size: 12.5px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       transition: all 0.2s;
+      text-decoration: none;
     }
     .btn-direct-download {
       background: linear-gradient(135deg, #00f0ff, #0077ff);
       color: #000;
       box-shadow: 0 4px 18px rgba(0, 240, 255, 0.45);
     }
+    .btn-convert-mp4 {
+      background: linear-gradient(135deg, #ff0055, #ff5500);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(255, 0, 85, 0.35);
+    }
     .btn-share-gallery { background: #1e2638; color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4); }
-    .btn-player-open { background: #141926; color: #aaa; border: 1px solid rgba(255,255,255,0.1); font-size: 11px; padding: 8px; }
+    .btn-player-open { background: #141926; color: #aaa; border: 1px solid rgba(255,255,255,0.1); font-size: 11px; padding: 7px; }
     .save-guide-note {
-      font-size: 10.5px;
+      font-size: 10px;
       color: #00f0ff;
       background: rgba(0, 240, 255, 0.08);
       border: 1px solid rgba(0, 240, 255, 0.25);
@@ -703,33 +708,41 @@
     </div>
   </div>
 
-  <!-- POP-UP MODAL -->
+  <!-- POP-UP MODAL (WITH 1-CLICK MP4 CONVERTER BRIDGE) -->
   <div class="save-modal-overlay" id="saveSuccessModal">
     <div class="save-modal-box">
       <div class="save-modal-header">
-        <span>🎬 Video Ready!</span>
+        <span>🎬 Handa Na Ang Video!</span>
         <button class="btn-close-modal" id="closeSaveModalBtn">✕</button>
       </div>
       <div class="preview-box">
         <video id="finishedVideoPreview" controls playsinline autoplay loop></video>
       </div>
       <div class="video-info-badge" id="videoDurationBadge">⏱️ Haba ng Video: 00:00 (YouTube Ready)</div>
-      <div class="save-modal-desc">
-        Piliin ang <strong>"I-download ang Video File"</strong> para ma-save nang buo ang video:
-      </div>
+
       <div class="save-modal-actions">
+        <!-- DIRECT WEBM DOWNLOAD -->
         <button class="save-act-btn btn-direct-download" id="saveDirectDownloadBtn">
-          ⬇️ I-download ang Video File (.webm)
+          ⬇️ I-download ang Video (.webm - YouTube Ready)
         </button>
+
+        <!-- 1-CLICK IN-APP MP4 CONVERTER -->
+        <button class="save-act-btn btn-convert-mp4" id="convertMp4OnlineBtn">
+          🔄 I-convert sa MP4 (Para sa Phone Gallery)
+        </button>
+
+        <!-- SHARE TO GALLERY / PHOTOS -->
         <button class="save-act-btn btn-share-gallery" id="shareToGalleryBtn">
           📲 I-save sa Gallery / Photos (Share Menu)
         </button>
+
         <button class="save-act-btn btn-player-open" id="openPlayerBtn">
           ▶ Buksan sa Fullscreen Player
         </button>
       </div>
+
       <div class="save-guide-note">
-        ✅ <strong>Buong Oras (YouTube Ready):</strong> Na-patch na ang totoong haba ng video. Kung hindi ito ma-play sa default gallery app ng phone mo, buksan ito sa <strong>Google Photos</strong> o <strong>VLC</strong>!
+        💡 <strong>Tip para sa Phone Gallery:</strong> Kung hindi ma-play ang WebM sa default phone gallery mo, pindutin ang pulang <strong>"🔄 I-convert sa MP4"</strong> button para makuha agad ang tunay na MP4!
       </div>
     </div>
   </div>
@@ -750,6 +763,7 @@
     const videoDurationBadge = document.getElementById('videoDurationBadge');
     const closeSaveModalBtn = document.getElementById('closeSaveModalBtn');
     const saveDirectDownloadBtn = document.getElementById('saveDirectDownloadBtn');
+    const convertMp4OnlineBtn = document.getElementById('convertMp4OnlineBtn');
     const shareToGalleryBtn = document.getElementById('shareToGalleryBtn');
     const openPlayerBtn = document.getElementById('openPlayerBtn');
 
@@ -1972,8 +1986,29 @@
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        saveDirectDownloadBtn.innerText = "⬇️ I-download ang Video File (.webm)";
+        saveDirectDownloadBtn.innerText = "⬇️ I-download ang Video (.webm - YouTube Ready)";
       }, 1500);
+    });
+
+    convertMp4OnlineBtn.addEventListener('click', () => {
+      if (!currentExportBlob) {
+        alert("Mag-record muna ng video bago mag-convert!");
+        return;
+      }
+      const downloadBlob = new Blob([currentExportBlob], { type: 'video/webm' });
+      const url = URL.createObjectURL(downloadBlob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = currentExportFileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 500);
+
+      const confirmConvert = confirm("Nai-download na ang iyong video!\n\nBubuksan natin ang 1-Click MP4 Converter para piliin mo lang ang na-download na video at maging MP4 agad para sa Phone Gallery. Ipagpatuloy?");
+      if (confirmConvert) {
+        window.open("https://cloudconvert.com/webm-to-mp4", "_blank");
+      }
     });
 
     shareToGalleryBtn.addEventListener('click', async () => {
@@ -2035,7 +2070,6 @@
         statusBadge.innerText = "PATCHING DURATION";
 
         const rawBlob = new Blob(recordedChunks, { type: preferredMime });
-        
         const elapsedSecs = Math.max(1, (Date.now() - recordStartTime) / 1000);
         const videoDurationMs = Math.round(elapsedSecs * 1000);
 
@@ -2118,7 +2152,6 @@
         mediaRecorder.onstop = async () => {
           statusBadge.innerText = "PATCHING DURATION";
           const rawBlob = new Blob(recordedChunks, { type: preferredMime });
-          
           const elapsedSecs = Math.max(1, (Date.now() - recordStartTime) / 1000);
           const clipDurationMs = Math.round(elapsedSecs * 1000);
 
